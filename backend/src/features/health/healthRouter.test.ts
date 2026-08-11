@@ -1,9 +1,13 @@
 import request from 'supertest';
 import { buildApp } from '../../app';
+import { openDb } from '../../db/connection';
+import { migrate } from '../../db/schema';
 
 describe('GET /api/health', () => {
   it('returns 200 with status ok', async () => {
-    const app = buildApp();
+    const db = openDb(':memory:');
+    migrate(db);
+    const app = buildApp(db);
 
     const res = await request(app).get('/api/health');
 

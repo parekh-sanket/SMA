@@ -1,8 +1,14 @@
 import { buildApp } from './app';
+import { openDb } from './db/connection';
+import { migrate } from './db/schema';
 
 const port = Number(process.env.PORT) || 4000;
+const dbPath = process.env.DB_PATH || 'salary.db';
 
-const app = buildApp();
+const db = openDb(dbPath);
+migrate(db);
+
+const app = buildApp(db);
 
 app.listen(port, () => {
   // eslint-disable-next-line no-console

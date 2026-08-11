@@ -1,18 +1,21 @@
 import express, { Express } from 'express';
+import type { Database } from 'better-sqlite3';
 import { healthRouter } from './features/health/healthRouter';
+import { createEmployeeRouter } from './features/employees/employeeRouter';
 
 /**
  * Builds the Express application by wiring feature routers under `/api`.
  *
- * A factory (rather than a module-level singleton) so tests can construct an
- * isolated app instance. A database handle will be injected here in later features.
+ * Takes a database handle so tests can inject an isolated in-memory SQLite
+ * instance, keeping API (component) tests independent and parallel-safe.
  */
-export function buildApp(): Express {
+export function buildApp(db: Database): Express {
   const app = express();
 
   app.use(express.json());
 
   app.use('/api', healthRouter);
+  app.use('/api', createEmployeeRouter(db));
 
   return app;
 }
