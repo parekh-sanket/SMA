@@ -132,3 +132,30 @@ describe('employeeRepository.facets', () => {
     });
   });
 });
+
+describe('employeeRepository.updateSalary', () => {
+  let db: Database;
+  let repo: EmployeeRepository;
+
+  beforeEach(() => {
+    db = openDb(':memory:');
+    migrate(db);
+    repo = createEmployeeRepository(db);
+    repo.insert(sample);
+  });
+
+  afterEach(() => db.close());
+
+  it('updates the salary and timestamp of an existing employee', () => {
+    const changed = repo.updateSalary('emp-1', 9000000, '2026-09-01T00:00:00.000Z');
+
+    expect(changed).toBe(true);
+    const updated = repo.getById('emp-1');
+    expect(updated?.salaryMinor).toBe(9000000);
+    expect(updated?.updatedAt).toBe('2026-09-01T00:00:00.000Z');
+  });
+
+  it('returns false for an unknown id', () => {
+    expect(repo.updateSalary('nope', 100, '2026-09-01T00:00:00.000Z')).toBe(false);
+  });
+});

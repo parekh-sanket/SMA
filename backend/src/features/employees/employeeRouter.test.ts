@@ -215,3 +215,50 @@ describe('GET /api/employees/facets', () => {
     });
   });
 });
+
+describe('PATCH /api/employees/:id/salary', () => {
+  it('updates the salary and returns 200 with the new values', async () => {
+    const app = appWithDb();
+    const created = await request(app).post('/api/employees').send(validBody);
+
+    const res = await request(app)
+      .patch(`/api/employees/${created.body.id}/salary`)
+      .send({ salary: 90000 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.salaryMinor).toBe(9000000);
+    expect(res.body.salaryFormatted).toBe('$90,000.00');
+  });
+
+  it('returns 400 for a negative salary', async () => {
+    const app = appWithDb();
+    const created = await request(app).post('/api/employees').send(validBody);
+
+    const res = await request(app)
+      .patch(`/api/employees/${created.body.id}/salary`)
+      .send({ salary: -1 });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when salary is missing', async () => {
+    const app = appWithDb();
+    const created = await request(app).post('/api/employees').send(validBody);
+
+    const res = await request(app)
+      .patch(`/api/employees/${created.body.id}/salary`)
+      .send({});
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 404 for an unknown id', async () => {
+    const app = appWithDb();
+
+    const res = await request(app)
+      .patch('/api/employees/does-not-exist/salary')
+      .send({ salary: 90000 });
+
+    expect(res.status).toBe(404);
+  });
+});
