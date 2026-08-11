@@ -127,3 +127,91 @@ describe('GET /api/employees/:id', () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe('GET /api/employees (list)', () => {
+  async function seed(app: Express) {
+    const mk = (over: Record<string, unknown>) => ({ ...validBody, ...over });
+    await request(app).post('/api/employees').send(mk({ name: 'Alice', email: 'alice@x.test', department: 'Engineering', country: 'US', salary: 3000 }));
+    await request(app).post('/api/employees').send(mk({ name: 'Bob', email: 'bob@x.test', department: 'Sales', country: 'IN', salary: 5000 }));
+    await request(app).post('/api/employees').send(mk({ name: 'Carol', email: 'carol@x.test', department: 'Engineering', country: 'IN', salary: 1000 }));
+  }
+
+  it('returns a paginated envelope with formatted salaries', async () => {
+    const app = appWithDb();
+    await seed(app);
+
+    const res = await request(app).get('/api/employees?page=1&pageSize=2&sortBy=name&order=asc');
+
+    expect(res.status).toBe(200);
+    expect(res.body.page).toBe(1);
+    expect(res.body.pageSize).toBe(2);
+    expect(res.body.total).toBe(3);
+    expect(res.body.data).toHaveLength(2);
+    expect(res.body.data.map((e: { name: string }) => e.name)).toEqual(['Alice', 'Bob']);
+    expect(res.body.data[0].salaryFormatted).toBeTruthy();
+  });
+
+  it('defaults to page 1 with pageSize 25', async () => {
+    const app = appWithDb();
+    await seed(app);
+
+    const res = await request(app).get('/api/employees');
+
+    expect(res.body.page).toBe(1);
+    expect(res.body.pageSize).toBe(25);
+    expect(res.body.total).toBe(3);
+  });
+
+  it('searches by q', async () => {
+    const app = appWithDb();
+    await seed(app);
+
+    const res = await request(app).get('/api/employees?q=carol');
+
+    expect(res.body.total).toBe(1);
+    expect(res.body.data[0].name).toBe('Carol');
+  });
+
+  it('filters by department and country', async () => {
+    const app = appWithDb();
+    await seed(app);
+
+    const res = await request(app).get('/api/employees?department=Engineering&country=IN');
+
+    expect(res.body.total).toBe(1);
+    expect(res.body.data[0].name).toBe('Carol');
+  });
+
+  it('sorts by salary descending', async () => {
+    const app = appWithDb();
+    await seed(app);
+
+    const res = await request(app).get('/api/employees?sortBy=salary&order=desc');
+
+    expect(res.body.data.map((e: { name: string }) => e.name)).toEqual(['Bob', 'Alice', 'Carol']);
+  });
+
+  it('returns 400 for an invalid sortBy', async () => {
+    const app = appWithDb();
+
+    const res = await request(app).get('/api/employees?sortBy=ssn');
+
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('GET /api/employees/facets', () => {
+  it('returns distinct departments and countries', async () => {
+    const app = appWithDb();
+    await request(app).post('/api/employees').send({ ...validBody, email: 'a@x.test', department: 'Engineering', country: 'US' });
+    await request(app).post('/api/employees').send({ ...validBody, email: 'b@x.test', department: 'Sales', country: 'IN' });
+
+    const res = await request(app).get('/api/employees/facets');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      departments: ['Engineering', 'Sales'],
+      countries: ['IN', 'US'],
+    });
+  });
+});
