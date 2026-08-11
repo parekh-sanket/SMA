@@ -1,4 +1,10 @@
-import type { CreateEmployeeInput, Employee } from '../../types/models';
+import type {
+  CreateEmployeeInput,
+  Employee,
+  EmployeeFacets,
+  ListEmployeesQuery,
+  PaginatedEmployees,
+} from '../../types/models';
 
 /** Thrown when GET /api/employees/:id returns 404. */
 export class EmployeeNotFoundError extends Error {}
@@ -15,6 +21,32 @@ export async function getEmployee(id: string): Promise<Employee> {
     throw new Error(`Failed to load employee (${res.status})`);
   }
   return (await res.json()) as Employee;
+}
+
+export async function listEmployees(query: ListEmployeesQuery): Promise<PaginatedEmployees> {
+  const params = new URLSearchParams({
+    page: String(query.page),
+    pageSize: String(query.pageSize),
+    sortBy: query.sortBy,
+    order: query.order,
+  });
+  if (query.q) params.set('q', query.q);
+  if (query.department) params.set('department', query.department);
+  if (query.country) params.set('country', query.country);
+
+  const res = await fetch(`/api/employees?${params.toString()}`);
+  if (!res.ok) {
+    throw new Error(`Failed to list employees (${res.status})`);
+  }
+  return (await res.json()) as PaginatedEmployees;
+}
+
+export async function getFacets(): Promise<EmployeeFacets> {
+  const res = await fetch('/api/employees/facets');
+  if (!res.ok) {
+    throw new Error(`Failed to load facets (${res.status})`);
+  }
+  return (await res.json()) as EmployeeFacets;
 }
 
 export async function createEmployee(input: CreateEmployeeInput): Promise<Employee> {
