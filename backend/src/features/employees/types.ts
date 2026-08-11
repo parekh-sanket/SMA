@@ -27,3 +27,29 @@ export interface Employee {
 export interface EmployeeResponse extends Employee {
   salaryFormatted: string;
 }
+
+export type SortBy = 'name' | 'salary';
+export type SortOrder = 'asc' | 'desc';
+
+/** Options for a paginated/filtered/sorted employee query. */
+export interface ListEmployeesOptions {
+  page: number;
+  pageSize: number;
+  q?: string;
+  department?: string;
+  country?: string;
+  sortBy: SortBy;
+  order: SortOrder;
+}
+
+/** A page of employees plus the total matching the filters (ignoring pagination). */
+export interface PaginatedEmployees {
+  data: Employee[];
+  total: number;
+}
+
+/** Distinct values available for filtering. */
+export interface EmployeeFacets {
+  departments: string[];
+  countries: string[];
+}

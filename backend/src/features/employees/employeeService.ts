@@ -1,15 +1,24 @@
 import { randomUUID } from 'node:crypto';
 import { formatUsd, toMinorUnits } from '../../domain/money';
 import type { EmployeeRepository } from './employeeRepository';
-import type { CreateEmployeeInput } from './employeeSchemas';
-import type { Employee, EmployeeResponse } from './types';
+import type { CreateEmployeeInput, ListEmployeesQuery } from './employeeSchemas';
+import type { Employee, EmployeeFacets, EmployeeResponse } from './types';
 
 /** Thrown when a create would violate the unique-email constraint. */
 export class DuplicateEmailError extends Error {}
 
+export interface PaginatedEmployeeResponse {
+  data: EmployeeResponse[];
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
 export interface EmployeeService {
   create(input: CreateEmployeeInput): EmployeeResponse;
   getById(id: string): EmployeeResponse | null;
+  list(query: ListEmployeesQuery): PaginatedEmployeeResponse;
+  getFacets(): EmployeeFacets;
 }
 
 function toResponse(employee: Employee): EmployeeResponse {
@@ -60,6 +69,20 @@ export function createEmployeeService(
     getById(id) {
       const employee = repo.getById(id);
       return employee ? toResponse(employee) : null;
+    },
+
+    list(query) {
+      const { data, total } = repo.list(query);
+      return {
+        data: data.map(toResponse),
+        page: query.page,
+        pageSize: query.pageSize,
+        total,
+      };
+    },
+
+    getFacets() {
+      return repo.facets();
     },
   };
 }

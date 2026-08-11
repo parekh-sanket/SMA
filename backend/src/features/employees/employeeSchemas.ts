@@ -19,3 +19,19 @@ export const createEmployeeSchema = z.object({
 });
 
 export type CreateEmployeeInput = z.infer<typeof createEmployeeSchema>;
+
+/**
+ * Validation for the directory list query. Values arrive as strings and are
+ * coerced; omitted values fall back to sensible defaults.
+ */
+export const listEmployeesQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  pageSize: z.coerce.number().int().positive().max(100).default(25),
+  q: z.string().trim().optional(),
+  department: z.string().trim().optional(),
+  country: z.string().trim().optional(),
+  sortBy: z.enum(['name', 'salary']).default('name'),
+  order: z.enum(['asc', 'desc']).default('asc'),
+});
+
+export type ListEmployeesQuery = z.infer<typeof listEmployeesQuerySchema>;
