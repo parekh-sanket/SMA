@@ -5,19 +5,11 @@ import { generateEmployees, seedDatabase } from '../../src/services/employeeSeed
 
 describe('generateEmployees', () => {
   it('generates the requested number of employees', () => {
-    expect(generateEmployees(50, 123)).toHaveLength(50);
+    expect(generateEmployees(50)).toHaveLength(50);
   });
 
-  it('is deterministic for the same seed', () => {
-    expect(generateEmployees(30, 42)).toEqual(generateEmployees(30, 42));
-  });
-
-  it('differs for a different seed', () => {
-    expect(generateEmployees(30, 1)).not.toEqual(generateEmployees(30, 2));
-  });
-
-  it('produces unique emails and valid fields', () => {
-    const employees = generateEmployees(300, 7);
+  it('produces unique ids/emails and valid fields', () => {
+    const employees = generateEmployees(300);
 
     expect(new Set(employees.map((e) => e.email)).size).toBe(300);
     expect(new Set(employees.map((e) => e.id)).size).toBe(300);
@@ -36,7 +28,7 @@ describe('seedDatabase', () => {
     const db = openDb(':memory:');
     migrate(db);
 
-    seedDatabase(db, 100, 123);
+    seedDatabase(db, 100);
 
     const repo = createEmployeeRepository(db);
     const { total } = repo.list({ page: 1, pageSize: 1, sortBy: 'name', order: 'asc' });
