@@ -262,3 +262,65 @@ describe('PATCH /api/employees/:id/salary', () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe('PUT /api/employees/:id', () => {
+  const editBody = {
+    name: 'Ada L.',
+    department: 'Product',
+    country: 'GB',
+    title: 'Principal',
+    hireDate: '2020-01-01',
+    employmentType: 'part-time',
+    status: 'terminated',
+  };
+
+  it('updates editable fields and returns 200, keeping email and salary', async () => {
+    const app = appWithDb();
+    const created = await request(app).post('/api/employees').send(validBody);
+
+    const res = await request(app).put(`/api/employees/${created.body.id}`).send(editBody);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ ...editBody, managerId: null });
+    expect(res.body.email).toBe('ada@acme.test');
+    expect(res.body.salaryMinor).toBe(8500050);
+  });
+
+  it('returns 400 for an invalid body', async () => {
+    const app = appWithDb();
+    const created = await request(app).post('/api/employees').send(validBody);
+
+    const res = await request(app).put(`/api/employees/${created.body.id}`).send({ name: '' });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 404 for an unknown id', async () => {
+    const app = appWithDb();
+
+    const res = await request(app).put('/api/employees/does-not-exist').send(editBody);
+
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('DELETE /api/employees/:id', () => {
+  it('deletes the employee and returns 204', async () => {
+    const app = appWithDb();
+    const created = await request(app).post('/api/employees').send(validBody);
+
+    const res = await request(app).delete(`/api/employees/${created.body.id}`);
+
+    expect(res.status).toBe(204);
+    const after = await request(app).get(`/api/employees/${created.body.id}`);
+    expect(after.status).toBe(404);
+  });
+
+  it('returns 404 for an unknown id', async () => {
+    const app = appWithDb();
+
+    const res = await request(app).delete('/api/employees/does-not-exist');
+
+    expect(res.status).toBe(404);
+  });
+});

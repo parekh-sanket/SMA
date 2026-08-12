@@ -159,3 +159,66 @@ describe('employeeRepository.updateSalary', () => {
     expect(repo.updateSalary('nope', 100, '2026-09-01T00:00:00.000Z')).toBe(false);
   });
 });
+
+describe('employeeRepository.update', () => {
+  let db: Database;
+  let repo: EmployeeRepository;
+
+  const edits = {
+    name: 'Ada L.',
+    department: 'Product',
+    country: 'GB',
+    title: 'Principal',
+    hireDate: '2020-01-01',
+    employmentType: 'part-time' as const,
+    status: 'terminated' as const,
+    managerId: 'mgr-9',
+  };
+
+  beforeEach(() => {
+    db = openDb(':memory:');
+    migrate(db);
+    repo = createEmployeeRepository(db);
+    repo.insert(sample);
+  });
+
+  afterEach(() => db.close());
+
+  it('updates editable fields and timestamp, leaving email and salary intact', () => {
+    const changed = repo.update('emp-1', edits, '2026-09-01T00:00:00.000Z');
+
+    expect(changed).toBe(true);
+    const updated = repo.getById('emp-1');
+    expect(updated).toMatchObject({ ...edits, updatedAt: '2026-09-01T00:00:00.000Z' });
+    expect(updated?.email).toBe('ada@acme.test');
+    expect(updated?.salaryMinor).toBe(8500050);
+  });
+
+  it('returns false for an unknown id', () => {
+    expect(repo.update('nope', edits, '2026-09-01T00:00:00.000Z')).toBe(false);
+  });
+});
+
+describe('employeeRepository.deleteById', () => {
+  let db: Database;
+  let repo: EmployeeRepository;
+
+  beforeEach(() => {
+    db = openDb(':memory:');
+    migrate(db);
+    repo = createEmployeeRepository(db);
+  });
+
+  afterEach(() => db.close());
+
+  it('deletes an existing employee', () => {
+    repo.insert(sample);
+
+    expect(repo.deleteById('emp-1')).toBe(true);
+    expect(repo.getById('emp-1')).toBeNull();
+  });
+
+  it('returns false for an unknown id', () => {
+    expect(repo.deleteById('nope')).toBe(false);
+  });
+});
