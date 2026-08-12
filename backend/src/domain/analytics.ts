@@ -34,7 +34,8 @@ export function percentile(values: number[], p: number): number {
   const sorted = [...values].sort((a, b) => a - b);
   if (sorted.length === 1) return sorted[0];
 
-  const rank = (p / 100) * (sorted.length - 1);
+  const clampedP = Math.min(100, Math.max(0, p));
+  const rank = (clampedP / 100) * (sorted.length - 1);
   const lower = Math.floor(rank);
   const upper = Math.ceil(rank);
   const weight = rank - lower;
@@ -59,9 +60,12 @@ export function summarize(values: number[]): Summary {
  * within the range. A value on a boundary falls into the upper bucket.
  */
 export function histogram(values: number[], bucketSize: number): HistogramBucket[] {
+  if (!Number.isFinite(bucketSize) || bucketSize <= 0) {
+    throw new RangeError(`bucketSize must be a positive number, received ${bucketSize}`);
+  }
   if (values.length === 0) return [];
 
-  const indexOf = (v: number) => Math.floor(v / bucketSize);
+  const indexOf = (v: number) => Math.max(0, Math.floor(v / bucketSize));
   const maxIndex = Math.max(...values.map(indexOf));
 
   const buckets: HistogramBucket[] = [];

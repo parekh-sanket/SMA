@@ -6,9 +6,9 @@ import { verifyToken } from '../services/authService';
  */
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
   const header = req.headers.authorization ?? '';
-  const [scheme, token] = header.split(' ');
+  const [scheme, token] = header.trim().split(/\s+/);
 
-  if (scheme !== 'Bearer' || !token || !verifyToken(token)) {
+  if (scheme?.toLowerCase() !== 'bearer' || !token || !verifyToken(token)) {
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }

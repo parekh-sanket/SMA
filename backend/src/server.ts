@@ -1,6 +1,9 @@
 import { buildApp } from './app';
 import { openDb } from './db/connection';
 import { migrate } from './db/schema';
+import { assertSecureAuthConfig } from './services/authService';
+
+assertSecureAuthConfig();
 
 const port = Number(process.env.PORT) || 4000;
 const dbPath = process.env.DB_PATH || 'salary.db';

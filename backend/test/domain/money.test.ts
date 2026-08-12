@@ -14,9 +14,14 @@ describe('toMinorUnits', () => {
     expect(toMinorUnits(1234.56)).toBe(123456);
   });
 
-  it('rounds to the nearest cent', () => {
+  it('rounds to the nearest cent (half-up, float-safe)', () => {
     expect(toMinorUnits(10.005)).toBe(1001);
     expect(toMinorUnits(10.004)).toBe(1000);
+    expect(toMinorUnits(1.005)).toBe(101);
+  });
+
+  it('rejects an amount too large to represent exactly', () => {
+    expect(() => toMinorUnits(1e20)).toThrow();
   });
 
   it('treats zero as zero', () => {
@@ -82,5 +87,9 @@ describe('assertValidMinorUnits', () => {
   it('rejects non-finite values', () => {
     expect(() => assertValidMinorUnits(NaN)).toThrow();
     expect(() => assertValidMinorUnits(Infinity)).toThrow();
+  });
+
+  it('rejects values beyond the safe integer range', () => {
+    expect(() => assertValidMinorUnits(Number.MAX_SAFE_INTEGER + 2)).toThrow();
   });
 });

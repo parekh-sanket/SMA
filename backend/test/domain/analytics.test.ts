@@ -36,6 +36,11 @@ describe('percentile', () => {
     expect(percentile(values, 100)).toBe(50);
   });
 
+  it('clamps out-of-range percentiles', () => {
+    expect(percentile(values, -50)).toBe(10);
+    expect(percentile(values, 150)).toBe(50);
+  });
+
   it('interpolates within the range', () => {
     expect(percentile(values, 50)).toBe(30);
     expect(percentile(values, 25)).toBe(20);
@@ -75,5 +80,10 @@ describe('histogram', () => {
       { start: 0, end: 100, count: 0 },
       { start: 100, end: 200, count: 1 },
     ]);
+  });
+
+  it('rejects a non-positive bucket size', () => {
+    expect(() => histogram([10, 20], 0)).toThrow();
+    expect(() => histogram([10, 20], -5)).toThrow();
   });
 });

@@ -29,6 +29,9 @@ export function assertValidMinorUnits(minor: number): void {
   if (minor < 0) {
     throw new RangeError(`Minor units must be non-negative, received ${minor}`);
   }
+  if (minor > Number.MAX_SAFE_INTEGER) {
+    throw new RangeError(`Minor units exceed the safe integer range, received ${minor}`);
+  }
 }
 
 /**
@@ -42,7 +45,13 @@ export function toMinorUnits(major: number): number {
   if (major < 0) {
     throw new RangeError(`Amount must be non-negative, received ${major}`);
   }
-  return Math.round(major * MINOR_UNITS_PER_MAJOR);
+  // Nudge by EPSILON so exact half-cents (e.g. 1.005) round up reliably despite
+  // floating-point representation.
+  const minor = Math.round((major + Number.EPSILON) * MINOR_UNITS_PER_MAJOR);
+  if (!Number.isSafeInteger(minor)) {
+    throw new RangeError(`Amount too large to represent exactly, received ${major}`);
+  }
+  return minor;
 }
 
 /**

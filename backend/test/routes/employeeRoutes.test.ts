@@ -108,6 +108,36 @@ describe('POST /api/employees', () => {
     expect(res.status).toBe(400);
   });
 
+  it('returns 400 for an impossible hire date', async () => {
+    const app = appWithDb();
+
+    const res = await authed(app)
+      .post('/api/employees')
+      .send({ ...validBody, hireDate: '2021-13-45' });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for a whitespace-only name', async () => {
+    const app = appWithDb();
+
+    const res = await authed(app)
+      .post('/api/employees')
+      .send({ ...validBody, name: '   ' });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for an implausibly large salary', async () => {
+    const app = appWithDb();
+
+    const res = await authed(app)
+      .post('/api/employees')
+      .send({ ...validBody, salary: 1e12 });
+
+    expect(res.status).toBe(400);
+  });
+
   it('returns 409 for a duplicate email', async () => {
     const app = appWithDb();
     await authed(app).post('/api/employees').send(validBody);
