@@ -1,4 +1,5 @@
 import express, { Express } from 'express';
+import cors from 'cors';
 import type { Database } from 'better-sqlite3';
 import { healthRouter } from './routes/healthRoutes';
 import { createAuthRouter } from './routes/authRoutes';
@@ -17,6 +18,8 @@ import { createAnalyticsRouter } from './routes/analyticsRoutes';
 export function buildApp(db: Database): Express {
   const app = express();
 
+  // Allow the frontend origin (set CORS_ORIGIN to the Vercel URL in production).
+  app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
   app.use(express.json());
 
   app.use('/api', healthRouter);

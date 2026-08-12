@@ -6,6 +6,10 @@ import react from '@vitejs/plugin-react';
 // can run on separate ports without CORS friction.
 export default defineConfig({
   plugins: [react()],
+  // Bake the API base URL into the client bundle at build time.
+  define: {
+    'process.env.API_BASE_URL': JSON.stringify(process.env.VITE_API_BASE_URL ?? ''),
+  },
   server: {
     port: 5173,
     proxy: {

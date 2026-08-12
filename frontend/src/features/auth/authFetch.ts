@@ -1,3 +1,4 @@
+import { apiUrl } from '../../config';
 import { clearToken, getToken } from './token';
 
 /**
@@ -12,7 +13,8 @@ export async function authFetch(
   const headers = new Headers(init.headers);
   if (token) headers.set('Authorization', `Bearer ${token}`);
 
-  const res = await fetch(input, { ...init, headers });
+  const target = typeof input === 'string' ? apiUrl(input) : input;
+  const res = await fetch(target, { ...init, headers });
   if (res.status === 401) {
     clearToken();
     // Session expired/invalid mid-use: bounce to login (hard redirect re-runs the guard).
