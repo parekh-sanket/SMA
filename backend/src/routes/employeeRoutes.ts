@@ -3,9 +3,11 @@ import type { Database } from 'better-sqlite3';
 import { createEmployeeRepository } from '../services/employeeRepository';
 import { createEmployeeService } from '../services/employeeService';
 import { createEmployeeController } from '../controllers/employeeController';
+import { requireAuth } from '../middleware/requireAuth';
 
 /**
  * Employee HTTP routes. Wires endpoints to controller handlers. Mounted under `/api`.
+ * All routes require authentication.
  *
  * Route order matters: `/employees/facets` and `/employees` are declared before
  * `/employees/:id` so that "facets" is not captured as an id.
@@ -14,6 +16,8 @@ export function createEmployeeRouter(db: Database): Router {
   const service = createEmployeeService(createEmployeeRepository(db));
   const controller = createEmployeeController(service);
   const router = Router();
+
+  router.use(requireAuth);
 
   router.post('/employees', controller.create);
   router.get('/employees/facets', controller.facets);

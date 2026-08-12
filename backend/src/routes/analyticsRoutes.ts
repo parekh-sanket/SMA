@@ -3,14 +3,18 @@ import type { Database } from 'better-sqlite3';
 import { createEmployeeRepository } from '../services/employeeRepository';
 import { createAnalyticsService } from '../services/analyticsService';
 import { createAnalyticsController } from '../controllers/analyticsController';
+import { requireAuth } from '../middleware/requireAuth';
 
 /**
  * Analytics HTTP routes ("how the org pays people"). Mounted under `/api`.
+ * All routes require authentication.
  */
 export function createAnalyticsRouter(db: Database): Router {
   const service = createAnalyticsService(createEmployeeRepository(db));
   const controller = createAnalyticsController(service);
   const router = Router();
+
+  router.use(requireAuth);
 
   router.get('/analytics/summary', controller.summary);
   router.get('/analytics/breakdown', controller.breakdown);

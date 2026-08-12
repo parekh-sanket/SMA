@@ -84,4 +84,28 @@ describe('CountryRoleInsights', () => {
       expect(screen.queryByText('$4,000.00')).not.toBeInTheDocument()
     );
   });
+
+  it('clears the country filter with the clear button', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+    expect(await screen.findByText('$1,000.00')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /clear country/i }));
+
+    await waitFor(() =>
+      expect(screen.queryByText('$1,000.00')).not.toBeInTheDocument()
+    );
+  });
+
+  it('disables the job title until a country is selected', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+    await screen.findByText('$1,000.00'); // country defaulted, title enabled
+
+    expect(screen.getByLabelText(/job title/i)).toBeEnabled();
+
+    await user.click(screen.getByRole('button', { name: /clear country/i }));
+
+    expect(screen.getByLabelText(/job title/i)).toBeDisabled();
+  });
 });

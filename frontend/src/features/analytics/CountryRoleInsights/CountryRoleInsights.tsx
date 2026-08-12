@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Box, IconButton, Paper, Stack, TextField, Typography } from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
 import type { Insights } from '../types';
@@ -18,9 +18,14 @@ export default function CountryRoleInsights({
   const [countryStats, setCountryStats] = useState<Insights | null>(null);
   const [roleStats, setRoleStats] = useState<Insights | null>(null);
 
-  // Default to the first country once facets arrive.
+  // Default to the first country once facets arrive — but only once, so the
+  // user can clear it afterwards without it snapping back.
+  const defaulted = useRef(false);
   useEffect(() => {
-    if (!country && countries.length) setCountry(countries[0]);
+    if (!defaulted.current && !country && countries.length) {
+      defaulted.current = true;
+      setCountry(countries[0]);
+    }
   }, [countries, country]);
 
   useEffect(() => {
@@ -61,28 +66,48 @@ export default function CountryRoleInsights({
       </Typography>
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
-        <TextField
-          label="Country"
-          value={country}
-          onChange={(e) => setCountry(e.target.value)}
-          select
-          SelectProps={{ native: true }}
-          InputLabelProps={{ shrink: true }}
-          size="small"
-          sx={{ width: { xs: '100%', sm: 200 } }}
-        >
-          {countries.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </TextField>
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          <TextField
+            label="Country"
+            value={country}
+            onChange={(e) => {
+              const next = e.target.value;
+              setCountry(next);
+              if (!next) setTitle(''); // a title without a country is meaningless
+            }}
+            select
+            SelectProps={{ native: true }}
+            InputLabelProps={{ shrink: true }}
+            size="small"
+            sx={{ width: { xs: '100%', sm: 200 } }}
+          >
+            <option value="">Select a country...</option>
+            {countries.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </TextField>
+          {country && (
+            <IconButton
+              aria-label="Clear country"
+              size="small"
+              onClick={() => {
+                setCountry('');
+                setTitle('');
+              }}
+            >
+              <ClearIcon fontSize="small" />
+            </IconButton>
+          )}
+        </Stack>
         <Stack direction="row" spacing={0.5} alignItems="center">
           <TextField
             label="Job Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             select
+            disabled={!country}
             SelectProps={{ native: true }}
             InputLabelProps={{ shrink: true }}
             size="small"

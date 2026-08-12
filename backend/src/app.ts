@@ -4,7 +4,6 @@ import { healthRouter } from './routes/healthRoutes';
 import { createAuthRouter } from './routes/authRoutes';
 import { createEmployeeRouter } from './routes/employeeRoutes';
 import { createAnalyticsRouter } from './routes/analyticsRoutes';
-import { requireAuth } from './middleware/requireAuth';
 
 /**
  * Builds the Express application by wiring routers under `/api`.
@@ -12,8 +11,8 @@ import { requireAuth } from './middleware/requireAuth';
  * Takes a database handle so tests can inject an isolated in-memory SQLite
  * instance, keeping API (component) tests independent and parallel-safe.
  *
- * `/api/health` and `/api/auth/login` are open; everything else is gated by
- * `requireAuth`.
+ * `/api/health` and `/api/auth/login` are open; the employee and analytics
+ * routers enforce their own `requireAuth` guard.
  */
 export function buildApp(db: Database): Express {
   const app = express();
@@ -22,8 +21,6 @@ export function buildApp(db: Database): Express {
 
   app.use('/api', healthRouter);
   app.use('/api', createAuthRouter());
-
-  app.use('/api', requireAuth);
   app.use('/api', createEmployeeRouter(db));
   app.use('/api', createAnalyticsRouter(db));
 
