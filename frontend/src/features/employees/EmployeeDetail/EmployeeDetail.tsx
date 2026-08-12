@@ -5,16 +5,31 @@ import {
   Button,
   Chip,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Divider,
+  Paper,
   Stack,
   TextField,
   Typography,
 } from '@mui/material';
 import type { Employee } from '../../../types/models';
-import { adjustSalary, EmployeeNotFoundError, getEmployee } from '../api';
+import {
+  adjustSalary,
+  deleteEmployee,
+  EmployeeNotFoundError,
+  getEmployee,
+} from '../api';
 import { EMPLOYMENT_TYPE_LABELS, STATUS_LABELS } from '../labels';
 
 interface EmployeeDetailProps {
   employeeId: string;
+  onEdit?: () => void;
+  onDeleted?: () => void;
+  onBack?: () => void;
 }
 
 type State =
@@ -23,11 +38,17 @@ type State =
   | { kind: 'not-found' }
   | { kind: 'error' };
 
-export default function EmployeeDetail({ employeeId }: EmployeeDetailProps) {
+export default function EmployeeDetail({
+  employeeId,
+  onEdit,
+  onDeleted,
+  onBack,
+}: EmployeeDetailProps) {
   const [state, setState] = useState<State>({ kind: 'loading' });
   const [adjusting, setAdjusting] = useState(false);
   const [newSalary, setNewSalary] = useState('');
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -60,19 +81,61 @@ export default function EmployeeDetail({ employeeId }: EmployeeDetailProps) {
     }
   };
 
+  const handleDelete = async () => {
+    try {
+      await deleteEmployee(employeeId);
+      setConfirmOpen(false);
+      onDeleted?.();
+    } catch {
+      setConfirmOpen(false);
+      setSaveError('Failed to delete employee');
+    }
+  };
+
   if (state.kind === 'loading') return <CircularProgress aria-label="Loading" />;
   if (state.kind === 'not-found') return <Typography>Employee not found</Typography>;
   if (state.kind === 'error') return <Typography>Something went wrong</Typography>;
 
   const e = state.employee;
   return (
-    <Box>
-      <Typography variant="h4" component="h1">
-        {e.name}
-      </Typography>
-      <Typography color="text.secondary">{e.title}</Typography>
+    <Paper sx={{ p: 3, maxWidth: 640 }}>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="flex-start"
+        spacing={2}
+      >
+        <Box>
+          <Typography variant="h4" component="h1">
+            {e.name}
+          </Typography>
+          <Typography color="text.secondary">{e.title}</Typography>
+        </Box>
+        <Stack direction="row" spacing={1}>
+          {onBack && (
+            <Button size="small" onClick={onBack}>
+              Back
+            </Button>
+          )}
+          {onEdit && (
+            <Button size="small" variant="outlined" onClick={onEdit}>
+              Edit
+            </Button>
+          )}
+          {onDeleted && (
+            <Button
+              size="small"
+              color="error"
+              variant="outlined"
+              onClick={() => setConfirmOpen(true)}
+            >
+              Delete
+            </Button>
+          )}
+        </Stack>
+      </Stack>
 
-      <Stack direction="row" spacing={1} sx={{ my: 1.5 }}>
+      <Stack direction="row" spacing={1} sx={{ my: 2 }}>
         <Chip label={EMPLOYMENT_TYPE_LABELS[e.employmentType]} />
         <Chip
           label={STATUS_LABELS[e.status]}
@@ -80,49 +143,64 @@ export default function EmployeeDetail({ employeeId }: EmployeeDetailProps) {
         />
       </Stack>
 
-      <Field label="Email" value={e.email} />
-      <Field label="Department" value={e.department} />
-      <Field label="Country" value={e.country} />
-      <Field label="Hire date" value={e.hireDate} />
+      <Divider sx={{ mb: 2 }} />
 
-      <Stack direction="row" spacing={1} alignItems="center">
-        <Field label="Salary" value={e.salaryFormatted} />
-        {!adjusting && (
-          <Button
-            size="small"
-            onClick={() => {
-              setAdjusting(true);
-              setNewSalary('');
-              setSaveError(null);
-            }}
-          >
-            Adjust Salary
-          </Button>
+      <Stack spacing={1}>
+        <Field label="Email" value={e.email} />
+        <Field label="Department" value={e.department} />
+        <Field label="Country" value={e.country} />
+        <Field label="Hire date" value={e.hireDate} />
+
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Field label="Salary" value={e.salaryFormatted} />
+          {!adjusting && (
+            <Button
+              size="small"
+              onClick={() => {
+                setAdjusting(true);
+                setNewSalary('');
+                setSaveError(null);
+              }}
+            >
+              Adjust Salary
+            </Button>
+          )}
+        </Stack>
+
+        {adjusting && (
+          <Stack direction="row" spacing={1} alignItems="center">
+            <TextField
+              label="New Salary (USD)"
+              type="number"
+              size="small"
+              value={newSalary}
+              onChange={(ev) => setNewSalary(ev.target.value)}
+            />
+            <Button variant="contained" onClick={handleSave}>
+              Save
+            </Button>
+            <Button onClick={() => setAdjusting(false)}>Cancel</Button>
+          </Stack>
         )}
+
+        {saveError && <Alert severity="error">{saveError}</Alert>}
       </Stack>
 
-      {adjusting && (
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1 }}>
-          <TextField
-            label="New Salary (USD)"
-            type="number"
-            size="small"
-            value={newSalary}
-            onChange={(ev) => setNewSalary(ev.target.value)}
-          />
-          <Button variant="contained" onClick={handleSave}>
-            Save
+      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+        <DialogTitle>Delete employee?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            This permanently removes {e.name}. This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmOpen(false)}>Cancel</Button>
+          <Button color="error" onClick={handleDelete}>
+            Confirm
           </Button>
-          <Button onClick={() => setAdjusting(false)}>Cancel</Button>
-        </Stack>
-      )}
-
-      {saveError && (
-        <Alert severity="error" sx={{ mt: 1 }}>
-          {saveError}
-        </Alert>
-      )}
-    </Box>
+        </DialogActions>
+      </Dialog>
+    </Paper>
   );
 }
 

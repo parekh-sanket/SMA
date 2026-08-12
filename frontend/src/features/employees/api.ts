@@ -4,6 +4,7 @@ import type {
   EmployeeFacets,
   ListEmployeesQuery,
   PaginatedEmployees,
+  UpdateEmployeeInput,
 } from '../../types/models';
 
 /** Thrown when GET /api/employees/:id returns 404. */
@@ -54,6 +55,34 @@ export async function adjustSalary(id: string, salary: number): Promise<Employee
     throw new Error(`Failed to adjust salary (${res.status})`);
   }
   return (await res.json()) as Employee;
+}
+
+export async function updateEmployee(
+  id: string,
+  input: UpdateEmployeeInput
+): Promise<Employee> {
+  const res = await fetch(`/api/employees/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  if (res.status === 404) {
+    throw new EmployeeNotFoundError('Employee not found');
+  }
+  if (!res.ok) {
+    throw new Error(`Failed to update employee (${res.status})`);
+  }
+  return (await res.json()) as Employee;
+}
+
+export async function deleteEmployee(id: string): Promise<void> {
+  const res = await fetch(`/api/employees/${id}`, { method: 'DELETE' });
+  if (res.status === 404) {
+    throw new EmployeeNotFoundError('Employee not found');
+  }
+  if (!res.ok) {
+    throw new Error(`Failed to delete employee (${res.status})`);
+  }
 }
 
 export async function getFacets(): Promise<EmployeeFacets> {

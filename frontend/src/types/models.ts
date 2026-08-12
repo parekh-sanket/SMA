@@ -64,3 +64,15 @@ export interface CreateEmployeeInput {
   managerId?: string;
   status?: EmployeeStatus;
 }
+
+/** Payload for editing an employee (email and salary are managed separately). */
+export interface UpdateEmployeeInput {
+  name: string;
+  department: string;
+  country: string;
+  title: string;
+  hireDate: string;
+  employmentType: EmploymentType;
+  status: EmployeeStatus;
+  managerId?: string | null;
+}

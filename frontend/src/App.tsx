@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import BackendStatus from './components/BackendStatus';
 import EmployeeDirectory from './features/employees/EmployeeDirectory';
 import EmployeeDetailPage from './features/employees/pages/EmployeeDetailPage';
+import EditEmployeePage from './features/employees/pages/EditEmployeePage';
 import NewEmployeePage from './features/employees/pages/NewEmployeePage';
 
 export default function App() {
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="/" element={<Navigate to="/employees" replace />} />
           <Route path="/employees" element={<EmployeeDirectory />} />
           <Route path="/employees/new" element={<NewEmployeePage />} />
+          <Route path="/employees/:id/edit" element={<EditEmployeePage />} />
           <Route path="/employees/:id" element={<EmployeeDetailPage />} />
         </Routes>
       </Container>
