@@ -3,6 +3,7 @@ import type { ChangeEvent, FormEvent } from 'react';
 import { Alert, Box, Button, Stack, TextField } from '@mui/material';
 import type { Employee, EmploymentType } from '../../../types/models';
 import { createEmployee, DuplicateEmailError } from '../api';
+import { COUNTRIES, DEPARTMENTS } from '../referenceData';
 
 interface EmployeeFormProps {
   onCreated?: (employee: Employee) => void;
@@ -105,14 +106,34 @@ export default function EmployeeForm({ onCreated }: EmployeeFormProps) {
           onChange={setField('department')}
           error={!!errors.department}
           helperText={errors.department}
-        />
+          select
+          SelectProps={{ native: true }}
+          InputLabelProps={{ shrink: true }}
+        >
+          <option value="" aria-label="none" />
+          {DEPARTMENTS.map((dept) => (
+            <option key={dept} value={dept}>
+              {dept}
+            </option>
+          ))}
+        </TextField>
         <TextField
           label="Country"
           value={values.country}
           onChange={setField('country')}
           error={!!errors.country}
           helperText={errors.country}
-        />
+          select
+          SelectProps={{ native: true }}
+          InputLabelProps={{ shrink: true }}
+        >
+          <option value="" aria-label="none" />
+          {COUNTRIES.map((country) => (
+            <option key={country.code} value={country.code}>
+              {country.name}
+            </option>
+          ))}
+        </TextField>
         <TextField
           label="Title"
           value={values.title}
