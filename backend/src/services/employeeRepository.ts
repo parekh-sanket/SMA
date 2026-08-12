@@ -7,6 +7,8 @@ import type {
   EmployeeStatus,
   ListEmployeesOptions,
   PaginatedEmployees,
+  SliceFilters,
+  SliceStats,
   UpdateEmployeeFields,
 } from './types';
 
@@ -23,6 +25,7 @@ export interface EmployeeRepository {
   allSalaries(): number[];
   breakdown(dimension: BreakdownDimension): BreakdownGroup[];
   topEarners(limit: number): Employee[];
+  sliceStats(filters: SliceFilters): SliceStats;
 }
 
 interface EmployeeRow {
@@ -161,7 +164,12 @@ export function createEmployeeRepository(db: Database): EmployeeRepository {
           country: string;
         }[]
       ).map((r) => r.country);
-      return { departments, countries };
+      const titles = (
+        db.prepare('SELECT DISTINCT title FROM employees ORDER BY title').all() as {
+          title: string;
+        }[]
+      ).map((r) => r.title);
+      return { departments, countries, titles };
     },
 
     allSalaries() {
@@ -194,6 +202,35 @@ export function createEmployeeRepository(db: Database): EmployeeRepository {
         .prepare('SELECT * FROM employees ORDER BY base_salary_minor DESC LIMIT ?')
         .all(limit) as EmployeeRow[];
       return rows.map(toEmployee);
+    },
+
+    sliceStats(filters) {
+      const conditions: string[] = [];
+      const params: Record<string, string> = {};
+      if (filters.country) {
+        conditions.push('country = @country');
+        params.country = filters.country;
+      }
+      if (filters.title) {
+        conditions.push('title = @title');
+        params.title = filters.title;
+      }
+      const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+      const row = db
+        .prepare(
+          `SELECT COUNT(*) AS count,
+                  COALESCE(MIN(base_salary_minor), 0) AS min,
+                  COALESCE(MAX(base_salary_minor), 0) AS max,
+                  COALESCE(AVG(base_salary_minor), 0) AS average
+           FROM employees ${where}`
+        )
+        .get(params) as { count: number; min: number; max: number; average: number };
+      return {
+        count: row.count,
+        min: row.min,
+        max: row.max,
+        average: Math.round(row.average),
+      };
     },
   };
 }

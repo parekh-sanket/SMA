@@ -16,6 +16,7 @@ export function createAnalyticsRouter(db: Database): Router {
   router.get('/analytics/breakdown', controller.breakdown);
   router.get('/analytics/top-earners', controller.topEarners);
   router.get('/analytics/distribution', controller.distribution);
+  router.get('/analytics/insights', controller.insights);
 
   return router;
 }

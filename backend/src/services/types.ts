@@ -52,6 +52,21 @@ export interface PaginatedEmployees {
 export interface EmployeeFacets {
   departments: string[];
   countries: string[];
+  titles: string[];
+}
+
+/** Filters for a country/role salary slice (both optional). */
+export interface SliceFilters {
+  country?: string;
+  title?: string;
+}
+
+/** Aggregate salary stats for a slice (minor units; zeros when empty). */
+export interface SliceStats {
+  count: number;
+  min: number;
+  max: number;
+  average: number;
 }
 
 /** One grouped row of an aggregate breakdown (all money in minor units). */

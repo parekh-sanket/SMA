@@ -4,7 +4,7 @@ import type {
   BreakdownDimension,
   EmployeeRepository,
 } from './employeeRepository';
-import type { EmployeeResponse } from './types';
+import type { EmployeeResponse, SliceFilters } from './types';
 
 /** Salary-distribution bucket width: $10,000 in minor units. */
 export const ANALYTICS_BUCKET_SIZE_MINOR = 1_000_000;
@@ -33,11 +33,22 @@ export interface DistributionResponse {
   buckets: { start: number; end: number; count: number }[];
 }
 
+export interface InsightsResponse {
+  count: number;
+  minMinor: number;
+  minFormatted: string;
+  maxMinor: number;
+  maxFormatted: string;
+  averageMinor: number;
+  averageFormatted: string;
+}
+
 export interface AnalyticsService {
   summary(): AnalyticsSummary;
   breakdown(dimension: BreakdownDimension): BreakdownGroupResponse[];
   topEarners(limit: number): EmployeeResponse[];
   distribution(): DistributionResponse;
+  insights(filters: SliceFilters): InsightsResponse;
 }
 
 export function createAnalyticsService(repo: EmployeeRepository): AnalyticsService {
@@ -77,6 +88,19 @@ export function createAnalyticsService(repo: EmployeeRepository): AnalyticsServi
     distribution() {
       const buckets = histogram(repo.allSalaries(), ANALYTICS_BUCKET_SIZE_MINOR);
       return { bucketSizeMinor: ANALYTICS_BUCKET_SIZE_MINOR, buckets };
+    },
+
+    insights(filters) {
+      const { count, min, max, average } = repo.sliceStats(filters);
+      return {
+        count,
+        minMinor: min,
+        minFormatted: formatUsd(min),
+        maxMinor: max,
+        maxFormatted: formatUsd(max),
+        averageMinor: average,
+        averageFormatted: formatUsd(average),
+      };
     },
   };
 }

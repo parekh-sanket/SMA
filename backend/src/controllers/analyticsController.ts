@@ -10,6 +10,11 @@ const topEarnersQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(10),
 });
 
+const insightsQuerySchema = z.object({
+  country: z.string().trim().min(1).optional(),
+  title: z.string().trim().min(1).optional(),
+});
+
 /**
  * Analytics HTTP handlers ("how the org pays people").
  */
@@ -39,6 +44,15 @@ export function createAnalyticsController(service: AnalyticsService) {
 
     distribution(_req: Request, res: Response) {
       res.json(service.distribution());
+    },
+
+    insights(req: Request, res: Response) {
+      const parsed = insightsQuerySchema.safeParse(req.query);
+      if (!parsed.success) {
+        res.status(400).json({ error: 'ValidationError', details: parsed.error.flatten() });
+        return;
+      }
+      res.json(service.insights(parsed.data));
     },
   };
 }
