@@ -1,7 +1,7 @@
 import request from 'supertest';
-import { buildApp } from '../../app';
-import { openDb } from '../../db/connection';
-import { migrate } from '../../db/schema';
+import { buildApp } from '../../src/app';
+import { openDb } from '../../src/db/connection';
+import { migrate } from '../../src/db/schema';
 
 describe('GET /api/health', () => {
   it('returns 200 with status ok', async () => {

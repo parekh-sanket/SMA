@@ -1,107 +1,152 @@
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
+import { Box, Card, CardContent, Link, Paper, Stack, Typography } from '@mui/material';
+import GroupsIcon from '@mui/icons-material/Groups';
+import PaymentsIcon from '@mui/icons-material/Payments';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
+import PublicIcon from '@mui/icons-material/Public';
+import ApartmentIcon from '@mui/icons-material/Apartment';
 import {
-  Box,
-  Link,
-  Paper,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  ToggleButton,
-  ToggleButtonGroup,
-  Typography,
-} from '@mui/material';
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import type { Employee } from '../../../types/models';
-import type {
-  AnalyticsSummary,
-  BreakdownDimension,
-  BreakdownGroup,
-  Distribution,
-} from '../types';
+import type { AnalyticsSummary, BreakdownGroup, Distribution } from '../types';
 import { getBreakdown, getDistribution, getSummary, getTopEarners } from '../api';
+import { getFacets } from '../../employees/api';
+
+const COLORS = [
+  '#6366f1', '#8b5cf6', '#ec4899', '#14b8a6', '#22c55e', '#f59e0b',
+  '#ef4444', '#3b82f6', '#06b6d4', '#a855f7', '#10b981', '#eab308',
+];
+
+const usd = (minor: number) => `$${Math.round(minor / 100).toLocaleString('en-US')}`;
+const kAxis = (v: number) => `$${v / 1000}k`;
+const tip = (v: number) => `$${v.toLocaleString('en-US')}`;
 
 export default function AnalyticsDashboard() {
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
-  const [dimension, setDimension] = useState<BreakdownDimension>('department');
-  const [breakdown, setBreakdown] = useState<BreakdownGroup[]>([]);
+  const [facets, setFacets] = useState<{ departments: string[]; countries: string[] }>({
+    departments: [],
+    countries: [],
+  });
+  const [deptBreakdown, setDeptBreakdown] = useState<BreakdownGroup[]>([]);
+  const [countryBreakdown, setCountryBreakdown] = useState<BreakdownGroup[]>([]);
   const [topEarners, setTopEarners] = useState<Employee[]>([]);
   const [distribution, setDistribution] = useState<Distribution | null>(null);
 
   useEffect(() => {
     getSummary().then(setSummary).catch(() => {});
+    getFacets().then(setFacets).catch(() => {});
+    getBreakdown('department').then(setDeptBreakdown).catch(() => {});
+    getBreakdown('country').then(setCountryBreakdown).catch(() => {});
     getTopEarners(5).then(setTopEarners).catch(() => {});
     getDistribution().then(setDistribution).catch(() => {});
   }, []);
 
-  useEffect(() => {
-    getBreakdown(dimension)
-      .then(setBreakdown)
-      .catch(() => setBreakdown([]));
-  }, [dimension]);
+  const distData = (distribution?.buckets ?? []).map((b) => ({
+    range: `${usd(b.start)}–${usd(b.end)}`,
+    count: b.count,
+  }));
+  const countryData = [...countryBreakdown]
+    .sort((a, b) => b.averageMinor - a.averageMinor)
+    .map((g) => ({ name: g.key, avg: Math.round(g.averageMinor / 100) }));
+  const deptData = [...deptBreakdown]
+    .sort((a, b) => b.averageMinor - a.averageMinor)
+    .map((g) => ({ name: g.key, avg: Math.round(g.averageMinor / 100) }));
 
   return (
     <Box>
-      <Typography variant="h5" component="h2" gutterBottom>
+      <Typography variant="h5" component="h2">
         Dashboard
+      </Typography>
+      <Typography color="text.secondary" sx={{ mb: 3 }}>
+        Analytics across your organization
       </Typography>
 
       {summary && (
-        <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', mb: 3 }}>
-          <StatCard label="Headcount" value={String(summary.headcount)} />
-          <StatCard label="Total Payroll" value={summary.totalPayrollFormatted} />
-          <StatCard label="Average" value={summary.averageFormatted} />
-          <StatCard label="Median" value={summary.medianFormatted} />
-        </Stack>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(3, 1fr)' },
+            gap: 2,
+            mb: 3,
+          }}
+        >
+          <StatCard icon={<GroupsIcon />} label="Total Employees" value={summary.headcount.toLocaleString('en-US')} color="#6366f1" />
+          <StatCard icon={<PaymentsIcon />} label="Total Payroll" value={summary.totalPayrollFormatted} color="#22c55e" />
+          <StatCard icon={<ShowChartIcon />} label="Average Salary" value={summary.averageFormatted} color="#3b82f6" />
+          <StatCard icon={<ShowChartIcon />} label="Median Salary" value={summary.medianFormatted} color="#8b5cf6" />
+          <StatCard icon={<PublicIcon />} label="Countries" value={String(facets.countries.length)} color="#14b8a6" />
+          <StatCard icon={<ApartmentIcon />} label="Departments" value={String(facets.departments.length)} color="#f59e0b" />
+        </Box>
       )}
 
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          sx={{ mb: 1 }}
-        >
-          <Typography variant="h6" component="h3">
-            Breakdown
-          </Typography>
-          <ToggleButtonGroup
-            size="small"
-            exclusive
-            value={dimension}
-            onChange={(_e, v) => {
-              if (v) setDimension(v);
-            }}
-          >
-            <ToggleButton value="department">Department</ToggleButton>
-            <ToggleButton value="country">Country</ToggleButton>
-          </ToggleButtonGroup>
-        </Stack>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>{dimension === 'country' ? 'Country' : 'Department'}</TableCell>
-              <TableCell align="right">Count</TableCell>
-              <TableCell align="right">Total</TableCell>
-              <TableCell align="right">Average</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {breakdown.map((g) => (
-              <TableRow key={g.key}>
-                <TableCell>{g.key}</TableCell>
-                <TableCell align="right">{g.count}</TableCell>
-                <TableCell align="right">{g.totalFormatted}</TableCell>
-                <TableCell align="right">{g.averageFormatted}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Paper>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+          gap: 2,
+          mb: 2,
+        }}
+      >
+        <ChartCard title="Salary Distribution" subtitle="Headcount by salary range">
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={distData}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="range" tick={{ fontSize: 11 }} />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                {distData.map((_, i) => (
+                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
 
-      <Paper sx={{ p: 2, mb: 3 }}>
+        <ChartCard title="Top Paying Countries" subtitle="Highest average salary by country">
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={countryData}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={-30} textAnchor="end" height={60} />
+              <YAxis tickFormatter={kAxis} />
+              <Tooltip formatter={tip} />
+              <Bar dataKey="avg" radius={[4, 4, 0, 0]}>
+                {countryData.map((_, i) => (
+                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      </Box>
+
+      <ChartCard title="Avg Salary by Department" subtitle="Average compensation across teams">
+        <ResponsiveContainer width="100%" height={Math.max(240, deptData.length * 40)}>
+          <BarChart data={deptData} layout="vertical" margin={{ left: 30 }}>
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+            <XAxis type="number" tickFormatter={kAxis} />
+            <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 12 }} />
+            <Tooltip formatter={tip} />
+            <Bar dataKey="avg" radius={[0, 4, 4, 0]}>
+              {deptData.map((_, i) => (
+                <Cell key={i} fill={COLORS[i % COLORS.length]} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </ChartCard>
+
+      <Paper sx={{ p: 2, mt: 2 }}>
         <Typography variant="h6" component="h3" gutterBottom>
           Top Earners
         </Typography>
@@ -116,60 +161,56 @@ export default function AnalyticsDashboard() {
           ))}
         </Stack>
       </Paper>
-
-      <Paper sx={{ p: 2 }}>
-        <Typography variant="h6" component="h3" gutterBottom>
-          Salary Distribution
-        </Typography>
-        {distribution && <DistributionChart distribution={distribution} />}
-      </Paper>
     </Box>
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({
+  icon,
+  label,
+  value,
+  color,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  color: string;
+}) {
   return (
-    <Paper sx={{ p: 2, minWidth: 160 }}>
-      <Typography variant="body2" color="text.secondary">
-        {label}
-      </Typography>
-      <Typography variant="h5" component="p">
-        {value}
-      </Typography>
-    </Paper>
+    <Card variant="outlined">
+      <CardContent>
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Typography variant="overline" color="text.secondary">
+            {label}
+          </Typography>
+          <Box sx={{ color, display: 'flex' }}>{icon}</Box>
+        </Stack>
+        <Typography variant="h4" component="p" sx={{ fontWeight: 600 }}>
+          {value}
+        </Typography>
+      </CardContent>
+    </Card>
   );
 }
 
-function DistributionChart({ distribution }: { distribution: Distribution }) {
-  const max = Math.max(1, ...distribution.buckets.map((b) => b.count));
-  const dollars = (minor: number) => `$${(minor / 100).toLocaleString('en-US')}`;
-
+function ChartCard({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  children: ReactNode;
+}) {
   return (
-    <Stack direction="row" spacing={1} alignItems="flex-end" sx={{ height: 160 }}>
-      {distribution.buckets.map((b) => (
-        <Stack
-          key={b.start}
-          alignItems="center"
-          justifyContent="flex-end"
-          sx={{ flex: 1, height: '100%' }}
-        >
-          <Typography variant="caption">{b.count}</Typography>
-          <Box
-            role="img"
-            aria-label={`salary band ${dollars(b.start)} to ${dollars(b.end)}, ${b.count} employees`}
-            sx={{
-              width: '100%',
-              bgcolor: 'primary.main',
-              height: `${(b.count / max) * 100}%`,
-              minHeight: 2,
-              borderRadius: 1,
-            }}
-          />
-          <Typography variant="caption" color="text.secondary" noWrap>
-            {dollars(b.start)}
-          </Typography>
-        </Stack>
-      ))}
-    </Stack>
+    <Paper sx={{ p: 2 }}>
+      <Typography variant="h6" component="h3">
+        {title}
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+        {subtitle}
+      </Typography>
+      {children}
+    </Paper>
   );
 }

@@ -1,8 +1,8 @@
 import express, { Express } from 'express';
 import type { Database } from 'better-sqlite3';
-import { healthRouter } from './features/health/healthRouter';
-import { createEmployeeRouter } from './features/employees/employeeRouter';
-import { createAnalyticsRouter } from './features/analytics/analyticsRouter';
+import { healthRouter } from './routes/healthRoutes';
+import { createEmployeeRouter } from './routes/employeeRoutes';
+import { createAnalyticsRouter } from './routes/analyticsRoutes';
 
 /**
  * Builds the Express application by wiring feature routers under `/api`.

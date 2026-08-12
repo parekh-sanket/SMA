@@ -3,7 +3,7 @@ import {
   fromMinorUnits,
   formatUsd,
   assertValidMinorUnits,
-} from './money';
+} from '../../src/domain/money';
 
 describe('toMinorUnits', () => {
   it('converts whole dollars to cents', () => {

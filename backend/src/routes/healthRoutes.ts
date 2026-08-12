@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
 /**
- * Health feature router. Mounted under `/api` by the app.
+ * Health router. Mounted under `/api` by the app.
  * Reports basic liveness so clients (and deploy platforms) can probe the API.
  */
 export const healthRouter = Router();

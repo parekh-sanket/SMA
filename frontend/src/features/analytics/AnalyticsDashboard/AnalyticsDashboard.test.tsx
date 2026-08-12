@@ -82,11 +82,11 @@ describe('AnalyticsDashboard', () => {
   it('shows the KPI cards from summary and facets', async () => {
     renderDashboard();
 
-    expect(await screen.findByText('$10,000.00')).toBeInTheDocument(); // average salary
-    expect(screen.getByText('$30,000.00')).toBeInTheDocument(); // total payroll
-    expect(screen.getByText(/total employees/i)).toBeInTheDocument();
-    expect(screen.getByText(/countries/i)).toBeInTheDocument();
-    expect(screen.getByText(/departments/i)).toBeInTheDocument();
+    expect(await screen.findByText('$30,000.00')).toBeInTheDocument(); // total payroll (unique)
+    expect(screen.getByText('Total Employees')).toBeInTheDocument();
+    expect(screen.getByText('Average Salary')).toBeInTheDocument();
+    expect(screen.getByText('Countries')).toBeInTheDocument();
+    expect(screen.getByText('Departments')).toBeInTheDocument();
   });
 
   it('renders the chart sections and fetches both breakdowns + distribution', async () => {

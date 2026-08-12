@@ -1,8 +1,8 @@
 import request from 'supertest';
 import type { Express } from 'express';
-import { openDb } from '../../db/connection';
-import { migrate } from '../../db/schema';
-import { buildApp } from '../../app';
+import { openDb } from '../../src/db/connection';
+import { migrate } from '../../src/db/schema';
+import { buildApp } from '../../src/app';
 
 const validBody = {
   name: 'Ada Lovelace',

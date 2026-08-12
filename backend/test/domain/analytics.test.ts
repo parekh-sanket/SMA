@@ -1,4 +1,4 @@
-import { average, median, percentile, summarize, histogram } from './analytics';
+import { average, median, percentile, summarize, histogram } from '../../src/domain/analytics';
 
 describe('average', () => {
   it('is 0 for an empty set', () => {

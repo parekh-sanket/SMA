@@ -1,10 +1,10 @@
-import { histogram, summarize } from '../../domain/analytics';
-import { formatUsd } from '../../domain/money';
+import { histogram, summarize } from '../domain/analytics';
+import { formatUsd } from '../domain/money';
 import type {
   BreakdownDimension,
   EmployeeRepository,
-} from '../employees/employeeRepository';
-import type { EmployeeResponse } from '../employees/types';
+} from './employeeRepository';
+import type { EmployeeResponse } from './types';
 
 /** Salary-distribution bucket width: $10,000 in minor units. */
 export const ANALYTICS_BUCKET_SIZE_MINOR = 1_000_000;

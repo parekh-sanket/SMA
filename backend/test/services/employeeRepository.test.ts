@@ -1,7 +1,7 @@
-import { openDb } from '../../db/connection';
-import { migrate } from '../../db/schema';
-import { createEmployeeRepository, EmployeeRepository } from './employeeRepository';
-import type { Employee } from './types';
+import { openDb } from '../../src/db/connection';
+import { migrate } from '../../src/db/schema';
+import { createEmployeeRepository, EmployeeRepository } from '../../src/services/employeeRepository';
+import type { Employee } from '../../src/services/types';
 import type { Database } from 'better-sqlite3';
 
 const sample: Employee = {
