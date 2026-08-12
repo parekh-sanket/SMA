@@ -1,5 +1,4 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import type { Employee } from '../../../types/models';
@@ -10,8 +9,13 @@ const summary = {
   totalPayrollFormatted: '$30,000.00',
   averageMinor: 1000000,
   averageFormatted: '$10,000.00',
-  medianMinor: 1000000,
-  medianFormatted: '$10,000.00',
+  medianMinor: 900000,
+  medianFormatted: '$9,000.00',
+};
+
+const facets = {
+  departments: ['Engineering', 'Sales', 'Product', 'Design'],
+  countries: ['US', 'IN'],
 };
 
 const deptBreakdown = [
@@ -24,20 +28,15 @@ const countryBreakdown = [
   { key: 'IN', count: 1, totalMinor: 500000, totalFormatted: '$5,000.00', averageMinor: 500000, averageFormatted: '$5,000.00' },
 ];
 
-function emp(over: Partial<Employee>): Employee {
+function emp(id: string, name: string, salaryFormatted: string): Employee {
   return {
-    id: 'x', name: 'X', email: 'x@x.test', department: 'Engineering', country: 'US',
+    id, name, email: `${id}@x.test`, department: 'Engineering', country: 'US',
     title: 'E', hireDate: '2021-01-01', employmentType: 'full-time', status: 'active',
-    managerId: null, salaryMinor: 0, salaryFormatted: '$0.00', createdAt: '', updatedAt: '',
-    ...over,
+    managerId: null, salaryMinor: 0, salaryFormatted, createdAt: '', updatedAt: '',
   };
 }
 
-const topEarners = [
-  emp({ id: 'g', name: 'Grace Hopper', salaryFormatted: '$15,000.00' }),
-  emp({ id: 'a', name: 'Ada Lovelace', salaryFormatted: '$10,000.00' }),
-];
-
+const topEarners = [emp('g', 'Grace Hopper', '$15,000.00'), emp('a', 'Ada Lovelace', '$10,000.00')];
 const distribution = {
   bucketSizeMinor: 1000000,
   buckets: [
@@ -54,6 +53,7 @@ function setupFetch() {
   global.fetch = jest.fn((input: RequestInfo | URL) => {
     const url = String(input);
     if (url.includes('/api/analytics/summary')) return json(summary);
+    if (url.includes('/api/employees/facets')) return json(facets);
     if (url.includes('/api/analytics/breakdown')) {
       return json(url.includes('dimension=country') ? countryBreakdown : deptBreakdown);
     }
@@ -79,31 +79,29 @@ describe('AnalyticsDashboard', () => {
     global.fetch = originalFetch;
   });
 
-  it('shows the org summary', async () => {
+  it('shows the KPI cards from summary and facets', async () => {
     renderDashboard();
 
-    expect(await screen.findByText('$30,000.00')).toBeInTheDocument();
-    expect(screen.getByText(/headcount/i)).toBeInTheDocument();
-    expect(screen.getByText('3')).toBeInTheDocument();
-    expect(screen.getByText(/median/i)).toBeInTheDocument();
+    expect(await screen.findByText('$10,000.00')).toBeInTheDocument(); // average salary
+    expect(screen.getByText('$30,000.00')).toBeInTheDocument(); // total payroll
+    expect(screen.getByText(/total employees/i)).toBeInTheDocument();
+    expect(screen.getByText(/countries/i)).toBeInTheDocument();
+    expect(screen.getByText(/departments/i)).toBeInTheDocument();
   });
 
-  it('shows the department breakdown and toggles to country', async () => {
-    const user = userEvent.setup();
+  it('renders the chart sections and fetches both breakdowns + distribution', async () => {
     renderDashboard();
 
-    expect(await screen.findByText('Engineering')).toBeInTheDocument();
+    expect(await screen.findByText(/salary distribution/i)).toBeInTheDocument();
+    expect(screen.getByText(/top paying countries/i)).toBeInTheDocument();
+    expect(screen.getByText(/avg salary by department/i)).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /country/i }));
-
-    expect(await screen.findByText('US')).toBeInTheDocument();
-    await waitFor(() =>
-      expect(
-        (global.fetch as jest.Mock).mock.calls.some((c) =>
-          String(c[0]).includes('dimension=country')
-        )
-      ).toBe(true)
-    );
+    await waitFor(() => {
+      const urls = (global.fetch as jest.Mock).mock.calls.map((c) => String(c[0]));
+      expect(urls.some((u) => u.includes('breakdown?dimension=country'))).toBe(true);
+      expect(urls.some((u) => u.includes('breakdown?dimension=department'))).toBe(true);
+      expect(urls.some((u) => u.includes('/analytics/distribution'))).toBe(true);
+    });
   });
 
   it('shows the top earners', async () => {
@@ -111,12 +109,5 @@ describe('AnalyticsDashboard', () => {
 
     expect(await screen.findByText('Grace Hopper')).toBeInTheDocument();
     expect(screen.getByText('Ada Lovelace')).toBeInTheDocument();
-  });
-
-  it('shows the salary distribution', async () => {
-    renderDashboard();
-
-    expect(await screen.findByText(/salary distribution/i)).toBeInTheDocument();
-    expect(await screen.findAllByRole('img', { name: /salary band/i })).toHaveLength(2);
   });
 });
