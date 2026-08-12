@@ -1,7 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Box, Chip, CircularProgress, Stack, Typography } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
 import type { Employee } from '../../../types/models';
-import { EmployeeNotFoundError, getEmployee } from '../api';
+import { adjustSalary, EmployeeNotFoundError, getEmployee } from '../api';
 
 interface EmployeeDetailProps {
   employeeId: string;
@@ -15,6 +24,9 @@ type State =
 
 export default function EmployeeDetail({ employeeId }: EmployeeDetailProps) {
   const [state, setState] = useState<State>({ kind: 'loading' });
+  const [adjusting, setAdjusting] = useState(false);
+  const [newSalary, setNewSalary] = useState('');
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -35,6 +47,17 @@ export default function EmployeeDetail({ employeeId }: EmployeeDetailProps) {
       active = false;
     };
   }, [employeeId]);
+
+  const handleSave = async () => {
+    setSaveError(null);
+    try {
+      const updated = await adjustSalary(employeeId, Number(newSalary));
+      setState({ kind: 'loaded', employee: updated });
+      setAdjusting(false);
+    } catch {
+      setSaveError('Failed to update salary');
+    }
+  };
 
   if (state.kind === 'loading') return <CircularProgress aria-label="Loading" />;
   if (state.kind === 'not-found') return <Typography>Employee not found</Typography>;
@@ -60,7 +83,44 @@ export default function EmployeeDetail({ employeeId }: EmployeeDetailProps) {
       <Field label="Department" value={e.department} />
       <Field label="Country" value={e.country} />
       <Field label="Hire date" value={e.hireDate} />
-      <Field label="Salary" value={e.salaryFormatted} />
+
+      <Stack direction="row" spacing={1} alignItems="center">
+        <Field label="Salary" value={e.salaryFormatted} />
+        {!adjusting && (
+          <Button
+            size="small"
+            onClick={() => {
+              setAdjusting(true);
+              setNewSalary('');
+              setSaveError(null);
+            }}
+          >
+            Adjust Salary
+          </Button>
+        )}
+      </Stack>
+
+      {adjusting && (
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1 }}>
+          <TextField
+            label="New Salary (USD)"
+            type="number"
+            size="small"
+            value={newSalary}
+            onChange={(ev) => setNewSalary(ev.target.value)}
+          />
+          <Button variant="contained" onClick={handleSave}>
+            Save
+          </Button>
+          <Button onClick={() => setAdjusting(false)}>Cancel</Button>
+        </Stack>
+      )}
+
+      {saveError && (
+        <Alert severity="error" sx={{ mt: 1 }}>
+          {saveError}
+        </Alert>
+      )}
     </Box>
   );
 }

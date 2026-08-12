@@ -41,6 +41,21 @@ export async function listEmployees(query: ListEmployeesQuery): Promise<Paginate
   return (await res.json()) as PaginatedEmployees;
 }
 
+export async function adjustSalary(id: string, salary: number): Promise<Employee> {
+  const res = await fetch(`/api/employees/${id}/salary`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ salary }),
+  });
+  if (res.status === 404) {
+    throw new EmployeeNotFoundError('Employee not found');
+  }
+  if (!res.ok) {
+    throw new Error(`Failed to adjust salary (${res.status})`);
+  }
+  return (await res.json()) as Employee;
+}
+
 export async function getFacets(): Promise<EmployeeFacets> {
   const res = await fetch('/api/employees/facets');
   if (!res.ok) {
