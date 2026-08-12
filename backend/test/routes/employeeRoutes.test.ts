@@ -3,6 +3,20 @@ import type { Express } from 'express';
 import { openDb } from '../../src/db/connection';
 import { migrate } from '../../src/db/schema';
 import { buildApp } from '../../src/app';
+import { issueToken } from '../../src/services/authService';
+
+const TOKEN = `Bearer ${issueToken()}`;
+
+/** Supertest wrapper that attaches a valid admin token to every request. */
+function authed(app: Express) {
+  return {
+    get: (p: string) => request(app).get(p).set('Authorization', TOKEN),
+    post: (p: string) => request(app).post(p).set('Authorization', TOKEN),
+    put: (p: string) => request(app).put(p).set('Authorization', TOKEN),
+    patch: (p: string) => request(app).patch(p).set('Authorization', TOKEN),
+    delete: (p: string) => request(app).delete(p).set('Authorization', TOKEN),
+  };
+}
 
 const validBody = {
   name: 'Ada Lovelace',
@@ -25,7 +39,7 @@ describe('POST /api/employees', () => {
   it('creates an employee and returns 201 with cents + formatted salary', async () => {
     const app = appWithDb();
 
-    const res = await request(app).post('/api/employees').send(validBody);
+    const res = await authed(app).post('/api/employees').send(validBody);
 
     expect(res.status).toBe(201);
     expect(res.body).toMatchObject({
@@ -49,9 +63,9 @@ describe('POST /api/employees', () => {
 
   it('accepts an explicit status and manager reference', async () => {
     const app = appWithDb();
-    await request(app).post('/api/employees').send(validBody);
+    await authed(app).post('/api/employees').send(validBody);
 
-    const res = await request(app)
+    const res = await authed(app)
       .post('/api/employees')
       .send({
         ...validBody,
@@ -69,7 +83,7 @@ describe('POST /api/employees', () => {
     const app = appWithDb();
     const { email, ...missingEmail } = validBody;
 
-    const res = await request(app).post('/api/employees').send(missingEmail);
+    const res = await authed(app).post('/api/employees').send(missingEmail);
 
     expect(res.status).toBe(400);
   });
@@ -77,7 +91,7 @@ describe('POST /api/employees', () => {
   it('returns 400 for an invalid employmentType', async () => {
     const app = appWithDb();
 
-    const res = await request(app)
+    const res = await authed(app)
       .post('/api/employees')
       .send({ ...validBody, employmentType: 'freelance' });
 
@@ -87,7 +101,7 @@ describe('POST /api/employees', () => {
   it('returns 400 for a negative salary', async () => {
     const app = appWithDb();
 
-    const res = await request(app)
+    const res = await authed(app)
       .post('/api/employees')
       .send({ ...validBody, salary: -5 });
 
@@ -96,9 +110,9 @@ describe('POST /api/employees', () => {
 
   it('returns 409 for a duplicate email', async () => {
     const app = appWithDb();
-    await request(app).post('/api/employees').send(validBody);
+    await authed(app).post('/api/employees').send(validBody);
 
-    const res = await request(app)
+    const res = await authed(app)
       .post('/api/employees')
       .send({ ...validBody, name: 'Someone Else' });
 
@@ -109,9 +123,9 @@ describe('POST /api/employees', () => {
 describe('GET /api/employees/:id', () => {
   it('returns 200 with the employee', async () => {
     const app = appWithDb();
-    const created = await request(app).post('/api/employees').send(validBody);
+    const created = await authed(app).post('/api/employees').send(validBody);
 
-    const res = await request(app).get(`/api/employees/${created.body.id}`);
+    const res = await authed(app).get(`/api/employees/${created.body.id}`);
 
     expect(res.status).toBe(200);
     expect(res.body.id).toBe(created.body.id);
@@ -122,7 +136,7 @@ describe('GET /api/employees/:id', () => {
   it('returns 404 for an unknown id', async () => {
     const app = appWithDb();
 
-    const res = await request(app).get('/api/employees/does-not-exist');
+    const res = await authed(app).get('/api/employees/does-not-exist');
 
     expect(res.status).toBe(404);
   });
@@ -131,16 +145,16 @@ describe('GET /api/employees/:id', () => {
 describe('GET /api/employees (list)', () => {
   async function seed(app: Express) {
     const mk = (over: Record<string, unknown>) => ({ ...validBody, ...over });
-    await request(app).post('/api/employees').send(mk({ name: 'Alice', email: 'alice@x.test', department: 'Engineering', country: 'US', salary: 3000 }));
-    await request(app).post('/api/employees').send(mk({ name: 'Bob', email: 'bob@x.test', department: 'Sales', country: 'IN', salary: 5000 }));
-    await request(app).post('/api/employees').send(mk({ name: 'Carol', email: 'carol@x.test', department: 'Engineering', country: 'IN', salary: 1000 }));
+    await authed(app).post('/api/employees').send(mk({ name: 'Alice', email: 'alice@x.test', department: 'Engineering', country: 'US', salary: 3000 }));
+    await authed(app).post('/api/employees').send(mk({ name: 'Bob', email: 'bob@x.test', department: 'Sales', country: 'IN', salary: 5000 }));
+    await authed(app).post('/api/employees').send(mk({ name: 'Carol', email: 'carol@x.test', department: 'Engineering', country: 'IN', salary: 1000 }));
   }
 
   it('returns a paginated envelope with formatted salaries', async () => {
     const app = appWithDb();
     await seed(app);
 
-    const res = await request(app).get('/api/employees?page=1&pageSize=2&sortBy=name&order=asc');
+    const res = await authed(app).get('/api/employees?page=1&pageSize=2&sortBy=name&order=asc');
 
     expect(res.status).toBe(200);
     expect(res.body.page).toBe(1);
@@ -155,7 +169,7 @@ describe('GET /api/employees (list)', () => {
     const app = appWithDb();
     await seed(app);
 
-    const res = await request(app).get('/api/employees');
+    const res = await authed(app).get('/api/employees');
 
     expect(res.body.page).toBe(1);
     expect(res.body.pageSize).toBe(25);
@@ -166,7 +180,7 @@ describe('GET /api/employees (list)', () => {
     const app = appWithDb();
     await seed(app);
 
-    const res = await request(app).get('/api/employees?q=carol');
+    const res = await authed(app).get('/api/employees?q=carol');
 
     expect(res.body.total).toBe(1);
     expect(res.body.data[0].name).toBe('Carol');
@@ -176,7 +190,7 @@ describe('GET /api/employees (list)', () => {
     const app = appWithDb();
     await seed(app);
 
-    const res = await request(app).get('/api/employees?department=Engineering&country=IN');
+    const res = await authed(app).get('/api/employees?department=Engineering&country=IN');
 
     expect(res.body.total).toBe(1);
     expect(res.body.data[0].name).toBe('Carol');
@@ -186,7 +200,7 @@ describe('GET /api/employees (list)', () => {
     const app = appWithDb();
     await seed(app);
 
-    const res = await request(app).get('/api/employees?sortBy=salary&order=desc');
+    const res = await authed(app).get('/api/employees?sortBy=salary&order=desc');
 
     expect(res.body.data.map((e: { name: string }) => e.name)).toEqual(['Bob', 'Alice', 'Carol']);
   });
@@ -194,7 +208,7 @@ describe('GET /api/employees (list)', () => {
   it('returns 400 for an invalid sortBy', async () => {
     const app = appWithDb();
 
-    const res = await request(app).get('/api/employees?sortBy=ssn');
+    const res = await authed(app).get('/api/employees?sortBy=ssn');
 
     expect(res.status).toBe(400);
   });
@@ -203,10 +217,10 @@ describe('GET /api/employees (list)', () => {
 describe('GET /api/employees/facets', () => {
   it('returns distinct departments, countries and titles', async () => {
     const app = appWithDb();
-    await request(app).post('/api/employees').send({ ...validBody, email: 'a@x.test', department: 'Engineering', country: 'US', title: 'Engineer' });
-    await request(app).post('/api/employees').send({ ...validBody, email: 'b@x.test', department: 'Sales', country: 'IN', title: 'Rep' });
+    await authed(app).post('/api/employees').send({ ...validBody, email: 'a@x.test', department: 'Engineering', country: 'US', title: 'Engineer' });
+    await authed(app).post('/api/employees').send({ ...validBody, email: 'b@x.test', department: 'Sales', country: 'IN', title: 'Rep' });
 
-    const res = await request(app).get('/api/employees/facets');
+    const res = await authed(app).get('/api/employees/facets');
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
@@ -220,9 +234,9 @@ describe('GET /api/employees/facets', () => {
 describe('PATCH /api/employees/:id/salary', () => {
   it('updates the salary and returns 200 with the new values', async () => {
     const app = appWithDb();
-    const created = await request(app).post('/api/employees').send(validBody);
+    const created = await authed(app).post('/api/employees').send(validBody);
 
-    const res = await request(app)
+    const res = await authed(app)
       .patch(`/api/employees/${created.body.id}/salary`)
       .send({ salary: 90000 });
 
@@ -233,9 +247,9 @@ describe('PATCH /api/employees/:id/salary', () => {
 
   it('returns 400 for a negative salary', async () => {
     const app = appWithDb();
-    const created = await request(app).post('/api/employees').send(validBody);
+    const created = await authed(app).post('/api/employees').send(validBody);
 
-    const res = await request(app)
+    const res = await authed(app)
       .patch(`/api/employees/${created.body.id}/salary`)
       .send({ salary: -1 });
 
@@ -244,9 +258,9 @@ describe('PATCH /api/employees/:id/salary', () => {
 
   it('returns 400 when salary is missing', async () => {
     const app = appWithDb();
-    const created = await request(app).post('/api/employees').send(validBody);
+    const created = await authed(app).post('/api/employees').send(validBody);
 
-    const res = await request(app)
+    const res = await authed(app)
       .patch(`/api/employees/${created.body.id}/salary`)
       .send({});
 
@@ -256,7 +270,7 @@ describe('PATCH /api/employees/:id/salary', () => {
   it('returns 404 for an unknown id', async () => {
     const app = appWithDb();
 
-    const res = await request(app)
+    const res = await authed(app)
       .patch('/api/employees/does-not-exist/salary')
       .send({ salary: 90000 });
 
@@ -277,9 +291,9 @@ describe('PUT /api/employees/:id', () => {
 
   it('updates editable fields and returns 200, keeping email and salary', async () => {
     const app = appWithDb();
-    const created = await request(app).post('/api/employees').send(validBody);
+    const created = await authed(app).post('/api/employees').send(validBody);
 
-    const res = await request(app).put(`/api/employees/${created.body.id}`).send(editBody);
+    const res = await authed(app).put(`/api/employees/${created.body.id}`).send(editBody);
 
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ ...editBody, managerId: null });
@@ -289,9 +303,9 @@ describe('PUT /api/employees/:id', () => {
 
   it('returns 400 for an invalid body', async () => {
     const app = appWithDb();
-    const created = await request(app).post('/api/employees').send(validBody);
+    const created = await authed(app).post('/api/employees').send(validBody);
 
-    const res = await request(app).put(`/api/employees/${created.body.id}`).send({ name: '' });
+    const res = await authed(app).put(`/api/employees/${created.body.id}`).send({ name: '' });
 
     expect(res.status).toBe(400);
   });
@@ -299,7 +313,7 @@ describe('PUT /api/employees/:id', () => {
   it('returns 404 for an unknown id', async () => {
     const app = appWithDb();
 
-    const res = await request(app).put('/api/employees/does-not-exist').send(editBody);
+    const res = await authed(app).put('/api/employees/does-not-exist').send(editBody);
 
     expect(res.status).toBe(404);
   });
@@ -308,19 +322,19 @@ describe('PUT /api/employees/:id', () => {
 describe('DELETE /api/employees/:id', () => {
   it('deletes the employee and returns 204', async () => {
     const app = appWithDb();
-    const created = await request(app).post('/api/employees').send(validBody);
+    const created = await authed(app).post('/api/employees').send(validBody);
 
-    const res = await request(app).delete(`/api/employees/${created.body.id}`);
+    const res = await authed(app).delete(`/api/employees/${created.body.id}`);
 
     expect(res.status).toBe(204);
-    const after = await request(app).get(`/api/employees/${created.body.id}`);
+    const after = await authed(app).get(`/api/employees/${created.body.id}`);
     expect(after.status).toBe(404);
   });
 
   it('returns 404 for an unknown id', async () => {
     const app = appWithDb();
 
-    const res = await request(app).delete('/api/employees/does-not-exist');
+    const res = await authed(app).delete('/api/employees/does-not-exist');
 
     expect(res.status).toBe(404);
   });

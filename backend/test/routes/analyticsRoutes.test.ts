@@ -3,6 +3,17 @@ import type { Express } from 'express';
 import { openDb } from '../../src/db/connection';
 import { migrate } from '../../src/db/schema';
 import { buildApp } from '../../src/app';
+import { issueToken } from '../../src/services/authService';
+
+const TOKEN = `Bearer ${issueToken()}`;
+
+/** Supertest wrapper that attaches a valid admin token to every request. */
+function authed(app: Express) {
+  return {
+    get: (p: string) => request(app).get(p).set('Authorization', TOKEN),
+    post: (p: string) => request(app).post(p).set('Authorization', TOKEN),
+  };
+}
 
 const base = {
   name: 'X',
@@ -22,7 +33,7 @@ function appWithDb(): Express {
 
 async function seed(app: Express, rows: Array<Record<string, unknown>>) {
   for (const [i, over] of rows.entries()) {
-    await request(app)
+    await authed(app)
       .post('/api/employees')
       .send({ ...base, email: `e${i}@x.test`, ...over });
   }
@@ -33,7 +44,7 @@ describe('GET /api/analytics/summary', () => {
     const app = appWithDb();
     await seed(app, [{ salary: 1000 }, { salary: 3000 }, { salary: 2000 }]);
 
-    const res = await request(app).get('/api/analytics/summary');
+    const res = await authed(app).get('/api/analytics/summary');
 
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({
@@ -49,7 +60,7 @@ describe('GET /api/analytics/summary', () => {
   it('returns zeros when there are no employees', async () => {
     const app = appWithDb();
 
-    const res = await request(app).get('/api/analytics/summary');
+    const res = await authed(app).get('/api/analytics/summary');
 
     expect(res.body).toMatchObject({ headcount: 0, totalPayrollMinor: 0, averageMinor: 0, medianMinor: 0 });
   });
@@ -64,7 +75,7 @@ describe('GET /api/analytics/breakdown', () => {
       { department: 'Sales', salary: 3000 },
     ]);
 
-    const res = await request(app).get('/api/analytics/breakdown?dimension=department');
+    const res = await authed(app).get('/api/analytics/breakdown?dimension=department');
 
     expect(res.status).toBe(200);
     const eng = res.body.find((r: { key: string }) => r.key === 'Engineering');
@@ -75,7 +86,7 @@ describe('GET /api/analytics/breakdown', () => {
   it('rejects an invalid dimension', async () => {
     const app = appWithDb();
 
-    const res = await request(app).get('/api/analytics/breakdown?dimension=title');
+    const res = await authed(app).get('/api/analytics/breakdown?dimension=title');
 
     expect(res.status).toBe(400);
   });
@@ -86,7 +97,7 @@ describe('GET /api/analytics/top-earners', () => {
     const app = appWithDb();
     await seed(app, [{ salary: 1000 }, { salary: 3000 }, { salary: 2000 }]);
 
-    const res = await request(app).get('/api/analytics/top-earners?limit=2');
+    const res = await authed(app).get('/api/analytics/top-earners?limit=2');
 
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(2);
@@ -100,7 +111,7 @@ describe('GET /api/analytics/distribution', () => {
     const app = appWithDb();
     await seed(app, [{ salary: 5000 }, { salary: 15000 }]);
 
-    const res = await request(app).get('/api/analytics/distribution');
+    const res = await authed(app).get('/api/analytics/distribution');
 
     expect(res.status).toBe(200);
     expect(res.body.bucketSizeMinor).toBe(1000000);
@@ -120,7 +131,7 @@ describe('GET /api/analytics/insights', () => {
       { country: 'IN', title: 'Analyst', salary: 2000 },
     ]);
 
-    const res = await request(app).get('/api/analytics/insights?country=US&title=Engineer');
+    const res = await authed(app).get('/api/analytics/insights?country=US&title=Engineer');
 
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({
@@ -137,7 +148,7 @@ describe('GET /api/analytics/insights', () => {
   it('returns zeros when nothing matches', async () => {
     const app = appWithDb();
 
-    const res = await request(app).get('/api/analytics/insights?country=US&title=Nobody');
+    const res = await authed(app).get('/api/analytics/insights?country=US&title=Nobody');
 
     expect(res.body).toMatchObject({ count: 0, minMinor: 0, maxMinor: 0, averageMinor: 0 });
   });
