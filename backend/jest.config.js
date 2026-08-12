@@ -4,10 +4,14 @@ module.exports = {
   testEnvironment: 'node',
   roots: ['<rootDir>/src', '<rootDir>/test'],
   testMatch: ['**/*.test.ts'],
-  collectCoverageFrom: [
-    'src/**/*.ts',
-    '!src/server.ts',
-    '!src/**/*.d.ts',
-  ],
+  // The build tsconfig uses node16 modules; Jest needs CommonJS, so compile
+  // tests as commonjs here (independent of the tsconfig used by `tsc`).
+  transform: {
+    '^.+\\.ts$': [
+      'ts-jest',
+      { tsconfig: { module: 'commonjs', moduleResolution: 'node' } },
+    ],
+  },
+  collectCoverageFrom: ['src/**/*.ts', '!src/server.ts', '!src/**/*.d.ts'],
   clearMocks: true,
 };
