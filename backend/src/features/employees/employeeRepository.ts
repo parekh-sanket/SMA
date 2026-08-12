@@ -1,5 +1,6 @@
 import type { Database } from 'better-sqlite3';
 import type {
+  BreakdownGroup,
   Employee,
   EmployeeFacets,
   EmploymentType,
@@ -9,6 +10,8 @@ import type {
   UpdateEmployeeFields,
 } from './types';
 
+export type BreakdownDimension = 'department' | 'country';
+
 export interface EmployeeRepository {
   insert(employee: Employee): void;
   getById(id: string): Employee | null;
@@ -17,6 +20,9 @@ export interface EmployeeRepository {
   updateSalary(id: string, salaryMinor: number, updatedAt: string): boolean;
   update(id: string, fields: UpdateEmployeeFields, updatedAt: string): boolean;
   deleteById(id: string): boolean;
+  allSalaries(): number[];
+  breakdown(dimension: BreakdownDimension): BreakdownGroup[];
+  topEarners(limit: number): Employee[];
 }
 
 interface EmployeeRow {
@@ -156,6 +162,38 @@ export function createEmployeeRepository(db: Database): EmployeeRepository {
         }[]
       ).map((r) => r.country);
       return { departments, countries };
+    },
+
+    allSalaries() {
+      const rows = db
+        .prepare('SELECT base_salary_minor FROM employees')
+        .all() as { base_salary_minor: number }[];
+      return rows.map((r) => r.base_salary_minor);
+    },
+
+    breakdown(dimension) {
+      // dimension is a whitelisted column name, safe to interpolate.
+      const column = dimension === 'country' ? 'country' : 'department';
+      const rows = db
+        .prepare(
+          `SELECT ${column} AS key, COUNT(*) AS count, SUM(base_salary_minor) AS total,
+                  AVG(base_salary_minor) AS average
+           FROM employees GROUP BY ${column} ORDER BY total DESC`
+        )
+        .all() as { key: string; count: number; total: number; average: number }[];
+      return rows.map((r) => ({
+        key: r.key,
+        count: r.count,
+        total: r.total,
+        average: Math.round(r.average),
+      }));
+    },
+
+    topEarners(limit) {
+      const rows = db
+        .prepare('SELECT * FROM employees ORDER BY base_salary_minor DESC LIMIT ?')
+        .all(limit) as EmployeeRow[];
+      return rows.map(toEmployee);
     },
   };
 }

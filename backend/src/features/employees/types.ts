@@ -54,6 +54,14 @@ export interface EmployeeFacets {
   countries: string[];
 }
 
+/** One grouped row of an aggregate breakdown (all money in minor units). */
+export interface BreakdownGroup {
+  key: string;
+  count: number;
+  total: number;
+  average: number;
+}
+
 /** The editable subset of an employee (email and salary are managed separately). */
 export interface UpdateEmployeeFields {
   name: string;

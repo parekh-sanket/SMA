@@ -29,6 +29,22 @@ function setupFetch() {
     if (url.includes('/api/employees/facets')) {
       return Promise.resolve({ ok: true, status: 200, json: async () => ({ departments: [], countries: [] }) } as Response);
     }
+    if (url.includes('/api/analytics/summary')) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          headcount: 0, totalPayrollMinor: 0, totalPayrollFormatted: '$0.00',
+          averageMinor: 0, averageFormatted: '$0.00', medianMinor: 0, medianFormatted: '$0.00',
+        }),
+      } as Response);
+    }
+    if (url.includes('/api/analytics/distribution')) {
+      return Promise.resolve({ ok: true, status: 200, json: async () => ({ bucketSizeMinor: 1000000, buckets: [] }) } as Response);
+    }
+    if (url.includes('/api/analytics/breakdown') || url.includes('/api/analytics/top-earners')) {
+      return Promise.resolve({ ok: true, status: 200, json: async () => [] } as Response);
+    }
     // A single-segment /api/employees/<id> (no query) is a detail fetch.
     if (/\/api\/employees\/[^/?]+$/.test(url)) {
       return Promise.resolve({ ok: true, status: 200, json: async () => appEmployee } as Response);
@@ -94,6 +110,14 @@ describe('App routing', () => {
 
     expect(
       await screen.findByRole('button', { name: /save changes/i })
+    ).toBeInTheDocument();
+  });
+
+  it('shows the dashboard at /dashboard', async () => {
+    renderAt('/dashboard');
+
+    expect(
+      await screen.findByRole('heading', { name: /dashboard/i })
     ).toBeInTheDocument();
   });
 });

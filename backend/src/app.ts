@@ -2,6 +2,7 @@ import express, { Express } from 'express';
 import type { Database } from 'better-sqlite3';
 import { healthRouter } from './features/health/healthRouter';
 import { createEmployeeRouter } from './features/employees/employeeRouter';
+import { createAnalyticsRouter } from './features/analytics/analyticsRouter';
 
 /**
  * Builds the Express application by wiring feature routers under `/api`.
@@ -16,6 +17,7 @@ export function buildApp(db: Database): Express {
 
   app.use('/api', healthRouter);
   app.use('/api', createEmployeeRouter(db));
+  app.use('/api', createAnalyticsRouter(db));
 
   return app;
 }
