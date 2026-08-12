@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Box, Paper, Stack, TextField, Typography } from '@mui/material';
+import { Box, IconButton, Paper, Stack, TextField, Typography } from '@mui/material';
+import ClearIcon from '@mui/icons-material/Clear';
 import type { Insights } from '../types';
 import { getInsights } from '../api';
 
@@ -76,23 +77,34 @@ export default function CountryRoleInsights({
             </option>
           ))}
         </TextField>
-        <TextField
-          label="Job Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          select
-          SelectProps={{ native: true }}
-          InputLabelProps={{ shrink: true }}
-          size="small"
-          sx={{ width: { xs: '100%', sm: 240 } }}
-        >
-          <option value="">Select a job title...</option>
-          {titles.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </TextField>
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          <TextField
+            label="Job Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            select
+            SelectProps={{ native: true }}
+            InputLabelProps={{ shrink: true }}
+            size="small"
+            sx={{ width: { xs: '100%', sm: 240 } }}
+          >
+            <option value="">Select a job title...</option>
+            {titles.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </TextField>
+          {title && (
+            <IconButton
+              aria-label="Clear job title"
+              size="small"
+              onClick={() => setTitle('')}
+            >
+              <ClearIcon fontSize="small" />
+            </IconButton>
+          )}
+        </Stack>
       </Stack>
 
       {countryStats && (

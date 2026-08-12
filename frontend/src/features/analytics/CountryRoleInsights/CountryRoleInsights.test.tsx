@@ -69,4 +69,19 @@ describe('CountryRoleInsights', () => {
       ).toBe(true)
     );
   });
+
+  it('clears the job title filter with the clear button', async () => {
+    const user = userEvent.setup();
+    renderPanel();
+    await screen.findByText('$1,000.00');
+
+    await user.selectOptions(screen.getByLabelText(/job title/i), 'Engineer');
+    expect(await screen.findByText('$4,000.00')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /clear job title/i }));
+
+    await waitFor(() =>
+      expect(screen.queryByText('$4,000.00')).not.toBeInTheDocument()
+    );
+  });
 });
