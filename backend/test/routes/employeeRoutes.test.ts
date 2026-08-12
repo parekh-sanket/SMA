@@ -201,10 +201,10 @@ describe('GET /api/employees (list)', () => {
 });
 
 describe('GET /api/employees/facets', () => {
-  it('returns distinct departments and countries', async () => {
+  it('returns distinct departments, countries and titles', async () => {
     const app = appWithDb();
-    await request(app).post('/api/employees').send({ ...validBody, email: 'a@x.test', department: 'Engineering', country: 'US' });
-    await request(app).post('/api/employees').send({ ...validBody, email: 'b@x.test', department: 'Sales', country: 'IN' });
+    await request(app).post('/api/employees').send({ ...validBody, email: 'a@x.test', department: 'Engineering', country: 'US', title: 'Engineer' });
+    await request(app).post('/api/employees').send({ ...validBody, email: 'b@x.test', department: 'Sales', country: 'IN', title: 'Rep' });
 
     const res = await request(app).get('/api/employees/facets');
 
@@ -212,6 +212,7 @@ describe('GET /api/employees/facets', () => {
     expect(res.body).toEqual({
       departments: ['Engineering', 'Sales'],
       countries: ['IN', 'US'],
+      titles: ['Engineer', 'Rep'],
     });
   });
 });

@@ -110,3 +110,35 @@ describe('GET /api/analytics/distribution', () => {
     ]);
   });
 });
+
+describe('GET /api/analytics/insights', () => {
+  it('returns count/min/max/average for a country + title slice (formatted)', async () => {
+    const app = appWithDb();
+    await seed(app, [
+      { country: 'US', title: 'Engineer', salary: 1000 },
+      { country: 'US', title: 'Engineer', salary: 3000 },
+      { country: 'IN', title: 'Analyst', salary: 2000 },
+    ]);
+
+    const res = await request(app).get('/api/analytics/insights?country=US&title=Engineer');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      count: 2,
+      minMinor: 100000,
+      maxMinor: 300000,
+      averageMinor: 200000,
+      minFormatted: '$1,000.00',
+      maxFormatted: '$3,000.00',
+      averageFormatted: '$2,000.00',
+    });
+  });
+
+  it('returns zeros when nothing matches', async () => {
+    const app = appWithDb();
+
+    const res = await request(app).get('/api/analytics/insights?country=US&title=Nobody');
+
+    expect(res.body).toMatchObject({ count: 0, minMinor: 0, maxMinor: 0, averageMinor: 0 });
+  });
+});

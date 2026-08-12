@@ -122,13 +122,57 @@ describe('employeeRepository.facets', () => {
     const db = openDb(':memory:');
     migrate(db);
     const repo = createEmployeeRepository(db);
-    repo.insert({ ...sample, id: 'e1', email: 'a@x.test', department: 'Engineering', country: 'US' });
-    repo.insert({ ...sample, id: 'e2', email: 'b@x.test', department: 'Sales', country: 'IN' });
-    repo.insert({ ...sample, id: 'e3', email: 'c@x.test', department: 'Engineering', country: 'IN' });
+    repo.insert({ ...sample, id: 'e1', email: 'a@x.test', department: 'Engineering', country: 'US', title: 'Engineer' });
+    repo.insert({ ...sample, id: 'e2', email: 'b@x.test', department: 'Sales', country: 'IN', title: 'Rep' });
+    repo.insert({ ...sample, id: 'e3', email: 'c@x.test', department: 'Engineering', country: 'IN', title: 'Engineer' });
 
     expect(repo.facets()).toEqual({
       departments: ['Engineering', 'Sales'],
       countries: ['IN', 'US'],
+      titles: ['Engineer', 'Rep'],
+    });
+  });
+});
+
+describe('employeeRepository.sliceStats', () => {
+  let db: Database;
+  let repo: EmployeeRepository;
+
+  beforeEach(() => {
+    db = openDb(':memory:');
+    migrate(db);
+    repo = createEmployeeRepository(db);
+    repo.insert({ ...sample, id: 'e1', email: 'a@x.test', country: 'US', title: 'Engineer', salaryMinor: 100000 });
+    repo.insert({ ...sample, id: 'e2', email: 'b@x.test', country: 'US', title: 'Engineer', salaryMinor: 300000 });
+    repo.insert({ ...sample, id: 'e3', email: 'c@x.test', country: 'IN', title: 'Analyst', salaryMinor: 200000 });
+  });
+
+  afterEach(() => db.close());
+
+  it('aggregates count/min/max/average for a country + title slice', () => {
+    expect(repo.sliceStats({ country: 'US', title: 'Engineer' })).toEqual({
+      count: 2,
+      min: 100000,
+      max: 300000,
+      average: 200000,
+    });
+  });
+
+  it('filters by country only', () => {
+    expect(repo.sliceStats({ country: 'US' })).toEqual({
+      count: 2,
+      min: 100000,
+      max: 300000,
+      average: 200000,
+    });
+  });
+
+  it('returns zeros when nothing matches', () => {
+    expect(repo.sliceStats({ country: 'IN', title: 'Engineer' })).toEqual({
+      count: 0,
+      min: 0,
+      max: 0,
+      average: 0,
     });
   });
 });
