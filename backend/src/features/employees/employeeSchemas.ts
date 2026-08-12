@@ -35,3 +35,10 @@ export const listEmployeesQuerySchema = z.object({
 });
 
 export type ListEmployeesQuery = z.infer<typeof listEmployeesQuerySchema>;
+
+/** Validation for adjusting an employee's salary (dollars in). */
+export const adjustSalarySchema = z.object({
+  salary: z.number().finite().nonnegative(),
+});
+
+export type AdjustSalaryInput = z.infer<typeof adjustSalarySchema>;

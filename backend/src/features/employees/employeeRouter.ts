@@ -2,7 +2,11 @@ import { Router } from 'express';
 import type { Database } from 'better-sqlite3';
 import { createEmployeeRepository } from './employeeRepository';
 import { createEmployeeService, DuplicateEmailError } from './employeeService';
-import { createEmployeeSchema, listEmployeesQuerySchema } from './employeeSchemas';
+import {
+  adjustSalarySchema,
+  createEmployeeSchema,
+  listEmployeesQuerySchema,
+} from './employeeSchemas';
 
 /**
  * Employee HTTP routes. Thin layer: validate input, delegate to the service,
@@ -54,6 +58,21 @@ export function createEmployeeRouter(db: Database): Router {
       return;
     }
     res.json(employee);
+  });
+
+  router.patch('/employees/:id/salary', (req, res) => {
+    const parsed = adjustSalarySchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: 'ValidationError', details: parsed.error.flatten() });
+      return;
+    }
+
+    const updated = service.adjustSalary(req.params.id, parsed.data.salary);
+    if (!updated) {
+      res.status(404).json({ error: 'NotFound' });
+      return;
+    }
+    res.json(updated);
   });
 
   return router;

@@ -13,6 +13,7 @@ export interface EmployeeRepository {
   getById(id: string): Employee | null;
   list(options: ListEmployeesOptions): PaginatedEmployees;
   facets(): EmployeeFacets;
+  updateSalary(id: string, salaryMinor: number, updatedAt: string): boolean;
 }
 
 interface EmployeeRow {
@@ -62,6 +63,9 @@ export function createEmployeeRepository(db: Database): EmployeeRepository {
     )
   `);
   const getByIdStmt = db.prepare('SELECT * FROM employees WHERE id = ?');
+  const updateSalaryStmt = db.prepare(
+    'UPDATE employees SET base_salary_minor = @salaryMinor, updated_at = @updatedAt WHERE id = @id'
+  );
 
   function buildFilters(options: ListEmployeesOptions): {
     where: string;
@@ -93,6 +97,11 @@ export function createEmployeeRepository(db: Database): EmployeeRepository {
     getById(id) {
       const row = getByIdStmt.get(id) as EmployeeRow | undefined;
       return row ? toEmployee(row) : null;
+    },
+
+    updateSalary(id, salaryMinor, updatedAt) {
+      const info = updateSalaryStmt.run({ id, salaryMinor, updatedAt });
+      return info.changes > 0;
     },
 
     list(options) {

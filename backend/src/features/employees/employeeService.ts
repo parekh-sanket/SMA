@@ -19,6 +19,7 @@ export interface EmployeeService {
   getById(id: string): EmployeeResponse | null;
   list(query: ListEmployeesQuery): PaginatedEmployeeResponse;
   getFacets(): EmployeeFacets;
+  adjustSalary(id: string, salary: number): EmployeeResponse | null;
 }
 
 function toResponse(employee: Employee): EmployeeResponse {
@@ -83,6 +84,13 @@ export function createEmployeeService(
 
     getFacets() {
       return repo.facets();
+    },
+
+    adjustSalary(id, salary) {
+      const changed = repo.updateSalary(id, toMinorUnits(salary), now());
+      if (!changed) return null;
+      const employee = repo.getById(id);
+      return employee ? toResponse(employee) : null;
     },
   };
 }
