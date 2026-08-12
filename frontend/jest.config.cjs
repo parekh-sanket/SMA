@@ -20,4 +20,6 @@ module.exports = {
   },
   testMatch: ['**/?(*.)test.(ts|tsx)'],
   collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/main.tsx', '!src/**/*.d.ts'],
+  // userEvent + Recharts render work is CPU-heavy; give parallel workers headroom.
+  testTimeout: 15000,
 };

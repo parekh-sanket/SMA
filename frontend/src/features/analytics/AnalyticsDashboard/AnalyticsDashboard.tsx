@@ -185,7 +185,14 @@ function StatCard({
           </Typography>
           <Box sx={{ color, display: 'flex' }}>{icon}</Box>
         </Stack>
-        <Typography variant="h4" component="p" sx={{ fontWeight: 600 }}>
+        <Typography
+          component="p"
+          sx={{
+            fontWeight: 600,
+            fontSize: { xs: '1.25rem', sm: '2rem' },
+            wordBreak: 'break-word',
+          }}
+        >
           {value}
         </Typography>
       </CardContent>

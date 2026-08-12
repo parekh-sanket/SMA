@@ -37,7 +37,7 @@ export default function EditEmployeePage() {
   if (state.kind === 'not-found') return <Typography>Employee not found</Typography>;
 
   return (
-    <Paper sx={{ p: 3, maxWidth: 560 }}>
+    <Paper sx={{ p: { xs: 2, sm: 3 }, maxWidth: 560 }}>
       <Typography variant="h5" component="h2" gutterBottom>
         Edit Employee
       </Typography>

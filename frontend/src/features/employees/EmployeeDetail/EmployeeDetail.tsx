@@ -98,20 +98,20 @@ export default function EmployeeDetail({
 
   const e = state.employee;
   return (
-    <Paper sx={{ p: 3, maxWidth: 640 }}>
+    <Paper sx={{ p: { xs: 2, sm: 3 }, maxWidth: 640 }}>
       <Stack
-        direction="row"
+        direction={{ xs: 'column', sm: 'row' }}
         justifyContent="space-between"
-        alignItems="flex-start"
+        alignItems={{ xs: 'stretch', sm: 'flex-start' }}
         spacing={2}
       >
         <Box>
-          <Typography variant="h4" component="h1">
+          <Typography variant="h4" component="h1" sx={{ wordBreak: 'break-word' }}>
             {e.name}
           </Typography>
           <Typography color="text.secondary">{e.title}</Typography>
         </Box>
-        <Stack direction="row" spacing={1}>
+        <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
           {onBack && (
             <Button size="small" onClick={onBack}>
               Back
@@ -168,7 +168,7 @@ export default function EmployeeDetail({
         </Stack>
 
         {adjusting && (
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: 'wrap', rowGap: 1 }}>
             <TextField
               label="New Salary (USD)"
               type="number"
@@ -207,10 +207,16 @@ export default function EmployeeDetail({
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <Stack direction="row" spacing={1}>
-      <Typography component="span" color="text.secondary" sx={{ minWidth: 96 }}>
+      <Typography
+        component="span"
+        color="text.secondary"
+        sx={{ minWidth: 96, flexShrink: 0 }}
+      >
         {label}
       </Typography>
-      <Typography component="span">{value}</Typography>
+      <Typography component="span" sx={{ wordBreak: 'break-word' }}>
+        {value}
+      </Typography>
     </Stack>
   );
 }

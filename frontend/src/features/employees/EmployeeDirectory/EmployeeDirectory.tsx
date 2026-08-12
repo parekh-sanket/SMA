@@ -84,7 +84,7 @@ export default function EmployeeDirectory() {
         direction="row"
         justifyContent="space-between"
         alignItems="center"
-        sx={{ mb: 2 }}
+        sx={{ mb: 2, gap: 1, flexWrap: 'wrap' }}
       >
         <Typography variant="h5" component="h2">
           Employees
@@ -94,13 +94,18 @@ export default function EmployeeDirectory() {
         </Button>
       </Stack>
 
-      <Stack direction="row" spacing={2} sx={{ mb: 2, flexWrap: 'wrap' }}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={{ xs: 1.5, sm: 2 }}
+        sx={{ mb: 2, flexWrap: 'wrap' }}
+      >
         <TextField
           label="Search"
           value={query.q ?? ''}
           onChange={onText('q')}
           placeholder="Name or email"
           size="small"
+          sx={{ width: { xs: '100%', sm: 220 } }}
         />
         <TextField
           label="Department"
@@ -110,7 +115,7 @@ export default function EmployeeDirectory() {
           SelectProps={{ native: true }}
           InputLabelProps={{ shrink: true }}
           size="small"
-          sx={{ minWidth: 160 }}
+          sx={{ width: { xs: '100%', sm: 180 } }}
         >
           <option value="">All</option>
           {facets.departments.map((d) => (
@@ -127,7 +132,7 @@ export default function EmployeeDirectory() {
           SelectProps={{ native: true }}
           InputLabelProps={{ shrink: true }}
           size="small"
-          sx={{ minWidth: 160 }}
+          sx={{ width: { xs: '100%', sm: 180 } }}
         >
           <option value="">All</option>
           {facets.countries.map((c) => (
@@ -191,6 +196,7 @@ export default function EmployeeDirectory() {
 
       <TablePagination
         component="div"
+        sx={{ '.MuiTablePagination-toolbar': { flexWrap: 'wrap', rowGap: 1 } }}
         count={result?.total ?? 0}
         page={query.page - 1}
         onPageChange={(_e, newPage) => setQuery((q) => ({ ...q, page: newPage + 1 }))}
