@@ -138,7 +138,10 @@ describe('EmployeeForm', () => {
     expect(screen.getByLabelText(/name/i)).toHaveValue('Ada Lovelace');
     expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/salary/i)).not.toBeInTheDocument();
-    expect(screen.getByLabelText(/status/i)).toBeInTheDocument();
+    const statusSelect = screen.getByLabelText(/status/i);
+    expect(statusSelect).toBeInTheDocument();
+    // no empty placeholder option in edit mode — just Active / Terminated
+    expect(statusSelect.querySelectorAll('option')).toHaveLength(2);
 
     await user.clear(screen.getByLabelText(/title/i));
     await user.type(screen.getByLabelText(/title/i), 'Principal Engineer');

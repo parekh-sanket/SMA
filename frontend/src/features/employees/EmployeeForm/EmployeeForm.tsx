@@ -151,7 +151,7 @@ export default function EmployeeForm({
           SelectProps={{ native: true }}
           InputLabelProps={{ shrink: true }}
         >
-          <option value="" aria-label="none" />
+          {!isEdit && <option value="" aria-label="none" />}
           {DEPARTMENTS.map((dept) => (
             <option key={dept} value={dept}>
               {dept}
@@ -169,7 +169,7 @@ export default function EmployeeForm({
           SelectProps={{ native: true }}
           InputLabelProps={{ shrink: true }}
         >
-          <option value="" aria-label="none" />
+          {!isEdit && <option value="" aria-label="none" />}
           {COUNTRIES.map((country) => (
             <option key={country.code} value={country.code}>
               {country.name}
@@ -205,7 +205,7 @@ export default function EmployeeForm({
           SelectProps={{ native: true }}
           InputLabelProps={{ shrink: true }}
         >
-          <option value="" aria-label="none" />
+          {!isEdit && <option value="" aria-label="none" />}
           {EMPLOYMENT_TYPES.map((type) => (
             <option key={type} value={type}>
               {EMPLOYMENT_TYPE_LABELS[type]}
@@ -224,7 +224,6 @@ export default function EmployeeForm({
             SelectProps={{ native: true }}
             InputLabelProps={{ shrink: true }}
           >
-            <option value="" aria-label="none" />
             {STATUSES.map((status) => (
               <option key={status} value={status}>
                 {STATUS_LABELS[status]}
