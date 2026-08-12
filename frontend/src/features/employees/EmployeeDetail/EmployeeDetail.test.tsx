@@ -45,7 +45,7 @@ describe('EmployeeDetail', () => {
     expect(screen.getByText('$85,000.50')).toBeInTheDocument();
     expect(screen.getByText(/full-time/i)).toBeInTheDocument();
     expect(screen.getByText(/active/i)).toBeInTheDocument();
-    expect(global.fetch).toHaveBeenCalledWith('/api/employees/emp-1');
+    expect(global.fetch).toHaveBeenCalledWith('/api/employees/emp-1', expect.anything());
   });
 
   it('shows a not-found message when the employee does not exist', async () => {

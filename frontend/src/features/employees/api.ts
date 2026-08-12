@@ -6,6 +6,7 @@ import type {
   PaginatedEmployees,
   UpdateEmployeeInput,
 } from '../../types/models';
+import { authFetch } from '../auth/authFetch';
 
 /** Thrown when GET /api/employees/:id returns 404. */
 export class EmployeeNotFoundError extends Error {}
@@ -14,7 +15,7 @@ export class EmployeeNotFoundError extends Error {}
 export class DuplicateEmailError extends Error {}
 
 export async function getEmployee(id: string): Promise<Employee> {
-  const res = await fetch(`/api/employees/${id}`);
+  const res = await authFetch(`/api/employees/${id}`);
   if (res.status === 404) {
     throw new EmployeeNotFoundError('Employee not found');
   }
@@ -35,7 +36,7 @@ export async function listEmployees(query: ListEmployeesQuery): Promise<Paginate
   if (query.department) params.set('department', query.department);
   if (query.country) params.set('country', query.country);
 
-  const res = await fetch(`/api/employees?${params.toString()}`);
+  const res = await authFetch(`/api/employees?${params.toString()}`);
   if (!res.ok) {
     throw new Error(`Failed to list employees (${res.status})`);
   }
@@ -43,7 +44,7 @@ export async function listEmployees(query: ListEmployeesQuery): Promise<Paginate
 }
 
 export async function adjustSalary(id: string, salary: number): Promise<Employee> {
-  const res = await fetch(`/api/employees/${id}/salary`, {
+  const res = await authFetch(`/api/employees/${id}/salary`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ salary }),
@@ -61,7 +62,7 @@ export async function updateEmployee(
   id: string,
   input: UpdateEmployeeInput
 ): Promise<Employee> {
-  const res = await fetch(`/api/employees/${id}`, {
+  const res = await authFetch(`/api/employees/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
@@ -76,7 +77,7 @@ export async function updateEmployee(
 }
 
 export async function deleteEmployee(id: string): Promise<void> {
-  const res = await fetch(`/api/employees/${id}`, { method: 'DELETE' });
+  const res = await authFetch(`/api/employees/${id}`, { method: 'DELETE' });
   if (res.status === 404) {
     throw new EmployeeNotFoundError('Employee not found');
   }
@@ -86,7 +87,7 @@ export async function deleteEmployee(id: string): Promise<void> {
 }
 
 export async function getFacets(): Promise<EmployeeFacets> {
-  const res = await fetch('/api/employees/facets');
+  const res = await authFetch('/api/employees/facets');
   if (!res.ok) {
     throw new Error(`Failed to load facets (${res.status})`);
   }
@@ -94,7 +95,7 @@ export async function getFacets(): Promise<EmployeeFacets> {
 }
 
 export async function createEmployee(input: CreateEmployeeInput): Promise<Employee> {
-  const res = await fetch('/api/employees', {
+  const res = await authFetch('/api/employees', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),

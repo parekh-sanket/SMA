@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import App from './App';
 import type { Employee } from './types/models';
+import { clearToken, setToken } from './features/auth/token';
 
 const appEmployee: Employee = {
   id: 'emp-1',
@@ -69,11 +70,13 @@ describe('App routing', () => {
   const originalFetch = global.fetch;
 
   beforeEach(() => {
+    setToken('test-token');
     setupFetch();
   });
 
   afterEach(() => {
     global.fetch = originalFetch;
+    clearToken();
   });
 
   it('renders the app title', async () => {
