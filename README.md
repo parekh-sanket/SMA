@@ -13,17 +13,25 @@ are **annual, gross**, in a single reporting currency (**USD**).
 
 | | URL |
 | --- | --- |
-| **App (frontend)** | `<your-vercel-url>` |
-| **API (backend)**  | `<your-render-url>` |
+| **App (frontend — Vercel)** | https://sma-neon.vercel.app |
+| **API (backend — Render)**  | https://sma-l9ro.onrender.com |
 
 **Login credentials**
 ```
 username: admin
 password: 123456789
 ```
-> The deployed backend **reseeds 10,000 employees on startup**, so the directory and dashboard
-> come up populated. First request after an idle period may be slow while the free-tier service
-> wakes up.
+
+> ### ⏳ Please be patient on the first load (important)
+> The backend is hosted on **Render's free tier**, which **spins the server down after ~15 min
+> of inactivity**. The **first request after it's been idle can take ~30–60 seconds** while the
+> service **cold-starts** (and it also reseeds 10,000 employees on boot). This is normal for the
+> free tier — **not a bug**.
+>
+> **If login or the directory seems stuck, wait ~1 minute and try again** — subsequent requests
+> are fast. You can pre-warm it by opening
+> [https://sma-l9ro.onrender.com/api/health](https://sma-l9ro.onrender.com/api/health) first;
+> once it returns `{"status":"ok"}`, the app will load quickly.
 
 ---
 
