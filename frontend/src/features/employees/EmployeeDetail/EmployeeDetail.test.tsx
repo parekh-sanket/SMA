@@ -87,4 +87,47 @@ describe('EmployeeDetail', () => {
     expect(patchCall?.[0]).toBe('/api/employees/emp-1/salary');
     expect(JSON.parse(patchCall?.[1].body)).toEqual({ salary: 90000 });
   });
+
+  it('invokes the edit and back callbacks', async () => {
+    const user = userEvent.setup();
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => employee,
+    } as Response);
+    const onEdit = jest.fn();
+    const onBack = jest.fn();
+    render(<EmployeeDetail employeeId="emp-1" onEdit={onEdit} onBack={onBack} />);
+    await screen.findByRole('heading', { name: /ada lovelace/i });
+
+    await user.click(screen.getByRole('button', { name: /edit/i }));
+    expect(onEdit).toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: /back/i }));
+    expect(onBack).toHaveBeenCalled();
+  });
+
+  it('deletes the employee after confirmation', async () => {
+    const user = userEvent.setup();
+    global.fetch = jest.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+      const method = (init?.method ?? 'GET').toUpperCase();
+      return Promise.resolve({
+        ok: true,
+        status: method === 'DELETE' ? 204 : 200,
+        json: async () => (method === 'DELETE' ? {} : employee),
+      } as Response);
+    });
+    const onDeleted = jest.fn();
+    render(<EmployeeDetail employeeId="emp-1" onDeleted={onDeleted} />);
+    await screen.findByRole('heading', { name: /ada lovelace/i });
+
+    await user.click(screen.getByRole('button', { name: /^delete$/i }));
+    await user.click(screen.getByRole('button', { name: /confirm/i }));
+
+    await waitFor(() => expect(onDeleted).toHaveBeenCalled());
+    const deleteCall = (global.fetch as jest.Mock).mock.calls.find(
+      (c) => (c[1]?.method ?? '').toUpperCase() === 'DELETE'
+    );
+    expect(deleteCall?.[0]).toBe('/api/employees/emp-1');
+  });
 });

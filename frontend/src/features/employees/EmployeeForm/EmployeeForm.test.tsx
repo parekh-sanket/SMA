@@ -113,4 +113,52 @@ describe('EmployeeForm', () => {
       await screen.findByText(/already (exists|taken|registered)/i)
     ).toBeInTheDocument();
   });
+
+  it('calls onCancel when Cancel is clicked', async () => {
+    const user = userEvent.setup();
+    const onCancel = jest.fn();
+    render(<EmployeeForm onCancel={onCancel} />);
+
+    await user.click(screen.getByRole('button', { name: /cancel/i }));
+
+    expect(onCancel).toHaveBeenCalled();
+  });
+
+  it('edit mode prefills fields (no email/salary) and saves via PUT', async () => {
+    const user = userEvent.setup();
+    const updated: Employee = { ...created, title: 'Principal Engineer' };
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => updated,
+    } as Response);
+    const onUpdated = jest.fn();
+    render(<EmployeeForm mode="edit" employee={created} onUpdated={onUpdated} />);
+
+    expect(screen.getByLabelText(/name/i)).toHaveValue('Ada Lovelace');
+    expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/salary/i)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/status/i)).toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText(/title/i));
+    await user.type(screen.getByLabelText(/title/i), 'Principal Engineer');
+    await user.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() => expect(onUpdated).toHaveBeenCalledWith(updated));
+
+    const [url, options] = (global.fetch as jest.Mock).mock.calls[0];
+    expect(url).toBe('/api/employees/emp-1');
+    expect(options.method).toBe('PUT');
+    const body = JSON.parse(options.body);
+    expect(body).toMatchObject({
+      name: 'Ada Lovelace',
+      title: 'Principal Engineer',
+      department: 'Engineering',
+      country: 'US',
+      employmentType: 'full-time',
+      status: 'active',
+    });
+    expect(body.email).toBeUndefined();
+    expect(body.salary).toBeUndefined();
+  });
 });
