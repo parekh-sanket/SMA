@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import EmployeeDetail from './EmployeeDetail';
 import type { Employee } from '../../../types/models';
 
@@ -57,5 +58,33 @@ describe('EmployeeDetail', () => {
     render(<EmployeeDetail employeeId="missing" />);
 
     expect(await screen.findByText(/not found/i)).toBeInTheDocument();
+  });
+
+  it('adjusts the salary and shows the new value', async () => {
+    const user = userEvent.setup();
+    const updated: Employee = { ...employee, salaryMinor: 9000000, salaryFormatted: '$90,000.00' };
+    global.fetch = jest.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const method = (init?.method ?? 'GET').toUpperCase();
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: async () => (method === 'PATCH' ? updated : employee),
+      } as Response);
+    });
+
+    render(<EmployeeDetail employeeId="emp-1" />);
+    expect(await screen.findByText('$85,000.50')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /adjust salary/i }));
+    await user.type(screen.getByLabelText(/new salary/i), '90000');
+    await user.click(screen.getByRole('button', { name: /save/i }));
+
+    expect(await screen.findByText('$90,000.00')).toBeInTheDocument();
+
+    const patchCall = (global.fetch as jest.Mock).mock.calls.find(
+      (c) => (c[1]?.method ?? '').toUpperCase() === 'PATCH'
+    );
+    expect(patchCall?.[0]).toBe('/api/employees/emp-1/salary');
+    expect(JSON.parse(patchCall?.[1].body)).toEqual({ salary: 90000 });
   });
 });
