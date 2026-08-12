@@ -117,6 +117,6 @@ describe('AnalyticsDashboard', () => {
     renderDashboard();
 
     expect(await screen.findByText(/salary distribution/i)).toBeInTheDocument();
-    expect(screen.getAllByLabelText(/salary band/i)).toHaveLength(2);
+    expect(await screen.findAllByRole('img', { name: /salary band/i })).toHaveLength(2);
   });
 });
