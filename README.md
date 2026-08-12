@@ -9,6 +9,24 @@ are **annual, gross**, in a single reporting currency (**USD**).
 
 ---
 
+## 🔗 Live demo
+
+| | URL |
+| --- | --- |
+| **App (frontend)** | `<your-vercel-url>` |
+| **API (backend)**  | `<your-render-url>` |
+
+**Login credentials**
+```
+username: admin
+password: 123456789
+```
+> The deployed backend **reseeds 10,000 employees on startup**, so the directory and dashboard
+> come up populated. First request after an idle period may be slow while the free-tier service
+> wakes up.
+
+---
+
 ## Features
 
 - **Employee directory** — paginated list of 10k employees with search, department/country
@@ -95,12 +113,11 @@ npm run dev           # SPA on http://localhost:5173 (proxies /api -> :4000)
 Then open **http://localhost:5173** and log in.
 
 ### Default login
-```
-username: admin
-password: admin
-```
-(Configurable via env — see below. In production the server refuses to start with these
-defaults.)
+- **Local dev:** `admin` / `admin`
+- **Deployed demo:** `admin` / `123456789`
+
+Configurable via env (`ADMIN_USERNAME` / `ADMIN_PASSWORD`). In production the server refuses to
+start with the default password, so the deployed instance uses the credentials above.
 
 ---
 
