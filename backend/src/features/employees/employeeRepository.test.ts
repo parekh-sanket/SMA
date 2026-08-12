@@ -222,3 +222,53 @@ describe('employeeRepository.deleteById', () => {
     expect(repo.deleteById('nope')).toBe(false);
   });
 });
+
+describe('employeeRepository analytics queries', () => {
+  let db: Database;
+  let repo: EmployeeRepository;
+
+  beforeEach(() => {
+    db = openDb(':memory:');
+    migrate(db);
+    repo = createEmployeeRepository(db);
+    repo.insert({ ...sample, id: 'e1', email: 'a@x.test', department: 'Engineering', country: 'US', salaryMinor: 100000 });
+    repo.insert({ ...sample, id: 'e2', email: 'b@x.test', department: 'Sales', country: 'US', salaryMinor: 300000 });
+    repo.insert({ ...sample, id: 'e3', email: 'c@x.test', department: 'Engineering', country: 'IN', salaryMinor: 200000 });
+  });
+
+  afterEach(() => db.close());
+
+  it('allSalaries returns every salary in minor units', () => {
+    expect(repo.allSalaries().sort((a, b) => a - b)).toEqual([100000, 200000, 300000]);
+  });
+
+  it('breakdown by department aggregates count, total and (rounded) average', () => {
+    const rows = repo.breakdown('department');
+
+    expect(rows.find((r) => r.key === 'Engineering')).toEqual({
+      key: 'Engineering',
+      count: 2,
+      total: 300000,
+      average: 150000,
+    });
+    expect(rows.find((r) => r.key === 'Sales')).toEqual({
+      key: 'Sales',
+      count: 1,
+      total: 300000,
+      average: 300000,
+    });
+  });
+
+  it('breakdown by country groups by country', () => {
+    expect(repo.breakdown('country').find((r) => r.key === 'US')).toEqual({
+      key: 'US',
+      count: 2,
+      total: 400000,
+      average: 200000,
+    });
+  });
+
+  it('topEarners returns the highest paid first, limited', () => {
+    expect(repo.topEarners(2).map((e) => e.salaryMinor)).toEqual([300000, 200000]);
+  });
+});
