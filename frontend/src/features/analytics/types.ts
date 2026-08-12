@@ -29,3 +29,13 @@ export interface Distribution {
 }
 
 export type BreakdownDimension = 'department' | 'country';
+
+export interface Insights {
+  count: number;
+  minMinor: number;
+  minFormatted: string;
+  maxMinor: number;
+  maxFormatted: string;
+  averageMinor: number;
+  averageFormatted: string;
+}

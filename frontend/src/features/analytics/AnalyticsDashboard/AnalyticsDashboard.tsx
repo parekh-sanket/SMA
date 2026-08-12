@@ -21,6 +21,7 @@ import type { Employee } from '../../../types/models';
 import type { AnalyticsSummary, BreakdownGroup, Distribution } from '../types';
 import { getBreakdown, getDistribution, getSummary, getTopEarners } from '../api';
 import { getFacets } from '../../employees/api';
+import CountryRoleInsights from '../CountryRoleInsights';
 
 const COLORS = [
   '#6366f1', '#8b5cf6', '#ec4899', '#14b8a6', '#22c55e', '#f59e0b',
@@ -33,10 +34,11 @@ const tip = (v: number) => `$${v.toLocaleString('en-US')}`;
 
 export default function AnalyticsDashboard() {
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
-  const [facets, setFacets] = useState<{ departments: string[]; countries: string[] }>({
-    departments: [],
-    countries: [],
-  });
+  const [facets, setFacets] = useState<{
+    departments: string[];
+    countries: string[];
+    titles: string[];
+  }>({ departments: [], countries: [], titles: [] });
   const [deptBreakdown, setDeptBreakdown] = useState<BreakdownGroup[]>([]);
   const [countryBreakdown, setCountryBreakdown] = useState<BreakdownGroup[]>([]);
   const [topEarners, setTopEarners] = useState<Employee[]>([]);
@@ -88,6 +90,11 @@ export default function AnalyticsDashboard() {
           <StatCard icon={<ApartmentIcon />} label="Departments" value={String(facets.departments.length)} color="#f59e0b" />
         </Box>
       )}
+
+      <CountryRoleInsights
+        countries={facets.countries ?? []}
+        titles={facets.titles ?? []}
+      />
 
       <Box
         sx={{

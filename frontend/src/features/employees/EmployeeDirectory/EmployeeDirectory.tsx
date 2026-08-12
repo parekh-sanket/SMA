@@ -37,12 +37,12 @@ const INITIAL_QUERY: ListEmployeesQuery = {
 export default function EmployeeDirectory() {
   const [query, setQuery] = useState<ListEmployeesQuery>(INITIAL_QUERY);
   const [result, setResult] = useState<PaginatedEmployees | null>(null);
-  const [facets, setFacets] = useState<EmployeeFacets>({ departments: [], countries: [] });
+  const [facets, setFacets] = useState<EmployeeFacets>({ departments: [], countries: [], titles: [] });
 
   useEffect(() => {
     getFacets()
       .then(setFacets)
-      .catch(() => setFacets({ departments: [], countries: [] }));
+      .catch(() => setFacets({ departments: [], countries: [], titles: [] }));
   }, []);
 
   useEffect(() => {

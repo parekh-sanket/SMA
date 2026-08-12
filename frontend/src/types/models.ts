@@ -49,6 +49,7 @@ export interface PaginatedEmployees {
 export interface EmployeeFacets {
   departments: string[];
   countries: string[];
+  titles: string[];
 }
 
 /** Payload for creating an employee. Salary is sent in major units (dollars). */

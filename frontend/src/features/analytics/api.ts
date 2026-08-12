@@ -4,6 +4,7 @@ import type {
   BreakdownDimension,
   BreakdownGroup,
   Distribution,
+  Insights,
 } from './types';
 
 export async function getSummary(): Promise<AnalyticsSummary> {
@@ -30,4 +31,16 @@ export async function getDistribution(): Promise<Distribution> {
   const res = await fetch('/api/analytics/distribution');
   if (!res.ok) throw new Error(`Failed to load distribution (${res.status})`);
   return (await res.json()) as Distribution;
+}
+
+export async function getInsights(filters: {
+  country?: string;
+  title?: string;
+}): Promise<Insights> {
+  const params = new URLSearchParams();
+  if (filters.country) params.set('country', filters.country);
+  if (filters.title) params.set('title', filters.title);
+  const res = await fetch(`/api/analytics/insights?${params.toString()}`);
+  if (!res.ok) throw new Error(`Failed to load insights (${res.status})`);
+  return (await res.json()) as Insights;
 }
