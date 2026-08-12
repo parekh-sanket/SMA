@@ -32,6 +32,10 @@ const bob: Employee = {
   salaryFormatted: '$5,000.00',
 };
 
+function json(data: unknown) {
+  return Promise.resolve({ ok: true, status: 200, json: async () => data } as Response);
+}
+
 function setupFetch({ total = 2 }: { total?: number } = {}) {
   global.fetch = jest.fn((input: RequestInfo | URL) => {
     const url = String(input);
@@ -78,6 +82,32 @@ describe('EmployeeDirectory', () => {
     expect(await screen.findByText('Alice')).toBeInTheDocument();
     expect(screen.getByText('Bob')).toBeInTheDocument();
     expect(listUrls().length).toBeGreaterThan(0);
+  });
+
+  it('shows an empty message when there are no employees', async () => {
+    global.fetch = jest.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/employees/facets')) {
+        return json({ departments: [], countries: [], titles: [] });
+      }
+      return json({ data: [], page: 1, pageSize: 25, total: 0 });
+    });
+    renderDirectory();
+
+    expect(await screen.findByText(/no employees found/i)).toBeInTheDocument();
+  });
+
+  it('shows an error message when the list request fails', async () => {
+    global.fetch = jest.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/employees/facets')) {
+        return json({ departments: [], countries: [], titles: [] });
+      }
+      return Promise.resolve({ ok: false, status: 500, json: async () => ({}) } as Response);
+    });
+    renderDirectory();
+
+    expect(await screen.findByText(/failed to load employees/i)).toBeInTheDocument();
   });
 
   it('searches by typing in the search box', async () => {

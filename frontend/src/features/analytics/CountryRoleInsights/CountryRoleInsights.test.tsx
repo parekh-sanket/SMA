@@ -41,10 +41,15 @@ describe('CountryRoleInsights', () => {
     global.fetch = originalFetch;
   });
 
-  it('shows min/max/avg for the selected country', async () => {
+  it('starts empty and shows min/max/avg only after a country is selected', async () => {
+    const user = userEvent.setup();
     renderPanel();
 
-    expect(screen.getByText(/country & role insights/i)).toBeInTheDocument();
+    // nothing selected -> no cards
+    expect(screen.queryByText('$1,000.00')).not.toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText(/country/i), 'US');
+
     expect(await screen.findByText('$1,000.00')).toBeInTheDocument(); // min
     expect(screen.getByText('$5,000.00')).toBeInTheDocument(); // max
     expect(screen.getByText('$3,000.00')).toBeInTheDocument(); // avg
@@ -53,6 +58,7 @@ describe('CountryRoleInsights', () => {
   it('shows the role average and matched count when a job title is picked', async () => {
     const user = userEvent.setup();
     renderPanel();
+    await user.selectOptions(screen.getByLabelText(/country/i), 'US');
     await screen.findByText('$1,000.00');
 
     await user.selectOptions(screen.getByLabelText(/job title/i), 'Engineer');
@@ -73,8 +79,7 @@ describe('CountryRoleInsights', () => {
   it('clears the job title filter with the clear button', async () => {
     const user = userEvent.setup();
     renderPanel();
-    await screen.findByText('$1,000.00');
-
+    await user.selectOptions(screen.getByLabelText(/country/i), 'US');
     await user.selectOptions(screen.getByLabelText(/job title/i), 'Engineer');
     expect(await screen.findByText('$4,000.00')).toBeInTheDocument();
 
@@ -88,6 +93,7 @@ describe('CountryRoleInsights', () => {
   it('clears the country filter with the clear button', async () => {
     const user = userEvent.setup();
     renderPanel();
+    await user.selectOptions(screen.getByLabelText(/country/i), 'US');
     expect(await screen.findByText('$1,000.00')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /clear country/i }));
@@ -100,12 +106,14 @@ describe('CountryRoleInsights', () => {
   it('disables the job title until a country is selected', async () => {
     const user = userEvent.setup();
     renderPanel();
-    await screen.findByText('$1,000.00'); // country defaulted, title enabled
 
+    expect(screen.getByLabelText(/job title/i)).toBeDisabled();
+
+    await user.selectOptions(screen.getByLabelText(/country/i), 'US');
+    await screen.findByText('$1,000.00');
     expect(screen.getByLabelText(/job title/i)).toBeEnabled();
 
     await user.click(screen.getByRole('button', { name: /clear country/i }));
-
     expect(screen.getByLabelText(/job title/i)).toBeDisabled();
   });
 });

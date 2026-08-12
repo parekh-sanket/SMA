@@ -13,6 +13,16 @@ export async function authFetch(
   if (token) headers.set('Authorization', `Bearer ${token}`);
 
   const res = await fetch(input, { ...init, headers });
-  if (res.status === 401) clearToken();
+  if (res.status === 401) {
+    clearToken();
+    // Session expired/invalid mid-use: bounce to login (hard redirect re-runs the guard).
+    if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+      try {
+        window.location.assign('/login');
+      } catch {
+        /* jsdom/no-op environments */
+      }
+    }
+  }
   return res;
 }

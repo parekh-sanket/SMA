@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, IconButton, Paper, Stack, TextField, Typography } from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
 import type { Insights } from '../types';
@@ -18,21 +18,10 @@ export default function CountryRoleInsights({
   const [countryStats, setCountryStats] = useState<Insights | null>(null);
   const [roleStats, setRoleStats] = useState<Insights | null>(null);
 
-  // Default to the first country once facets arrive — but only once, so the
-  // user can clear it afterwards without it snapping back.
-  const defaulted = useRef(false);
+  // No default country: the panel starts empty until the admin picks one.
   useEffect(() => {
-    if (!defaulted.current && !country && countries.length) {
-      defaulted.current = true;
-      setCountry(countries[0]);
-    }
-  }, [countries, country]);
-
-  useEffect(() => {
-    if (!country) {
-      setCountryStats(null);
-      return;
-    }
+    setCountryStats(null); // clear stale numbers before refetching under the new label
+    if (!country) return;
     let active = true;
     getInsights({ country })
       .then((s) => active && setCountryStats(s))
@@ -43,10 +32,8 @@ export default function CountryRoleInsights({
   }, [country]);
 
   useEffect(() => {
-    if (!country || !title) {
-      setRoleStats(null);
-      return;
-    }
+    setRoleStats(null);
+    if (!country || !title) return;
     let active = true;
     getInsights({ country, title })
       .then((s) => active && setRoleStats(s))

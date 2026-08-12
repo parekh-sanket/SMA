@@ -48,7 +48,9 @@ export default function EmployeeDetail({
   const [adjusting, setAdjusting] = useState(false);
   const [newSalary, setNewSalary] = useState('');
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [savingSalary, setSavingSalary] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -72,16 +74,20 @@ export default function EmployeeDetail({
 
   const handleSave = async () => {
     setSaveError(null);
+    setSavingSalary(true);
     try {
       const updated = await adjustSalary(employeeId, Number(newSalary));
       setState({ kind: 'loaded', employee: updated });
       setAdjusting(false);
     } catch {
       setSaveError('Failed to update salary');
+    } finally {
+      setSavingSalary(false);
     }
   };
 
   const handleDelete = async () => {
+    setDeleting(true);
     try {
       await deleteEmployee(employeeId);
       setConfirmOpen(false);
@@ -89,6 +95,8 @@ export default function EmployeeDetail({
     } catch {
       setConfirmOpen(false);
       setSaveError('Failed to delete employee');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -176,7 +184,11 @@ export default function EmployeeDetail({
               value={newSalary}
               onChange={(ev) => setNewSalary(ev.target.value)}
             />
-            <Button variant="contained" onClick={handleSave}>
+            <Button
+              variant="contained"
+              onClick={handleSave}
+              disabled={savingSalary || !newSalary.trim() || !(Number(newSalary) >= 0)}
+            >
               Save
             </Button>
             <Button onClick={() => setAdjusting(false)}>Cancel</Button>
@@ -195,7 +207,7 @@ export default function EmployeeDetail({
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmOpen(false)}>Cancel</Button>
-          <Button color="error" onClick={handleDelete}>
+          <Button color="error" onClick={handleDelete} disabled={deleting}>
             Confirm
           </Button>
         </DialogActions>

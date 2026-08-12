@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import {
+  Alert,
   Box,
   Button,
   Link,
@@ -37,6 +38,7 @@ const INITIAL_QUERY: ListEmployeesQuery = {
 export default function EmployeeDirectory() {
   const [query, setQuery] = useState<ListEmployeesQuery>(INITIAL_QUERY);
   const [result, setResult] = useState<PaginatedEmployees | null>(null);
+  const [error, setError] = useState(false);
   const [facets, setFacets] = useState<EmployeeFacets>({ departments: [], countries: [], titles: [] });
 
   useEffect(() => {
@@ -47,12 +49,13 @@ export default function EmployeeDirectory() {
 
   useEffect(() => {
     let active = true;
+    setError(false);
     listEmployees(query)
       .then((data) => {
         if (active) setResult(data);
       })
       .catch(() => {
-        if (active) setResult({ data: [], page: query.page, pageSize: query.pageSize, total: 0 });
+        if (active) setError(true);
       });
     return () => {
       active = false;
@@ -143,6 +146,12 @@ export default function EmployeeDirectory() {
         </TextField>
       </Stack>
 
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          Failed to load employees. Please try again.
+        </Alert>
+      )}
+
       <TableContainer component={Paper}>
         <Table size="small">
           <TableHead>
@@ -174,6 +183,20 @@ export default function EmployeeDirectory() {
             </TableRow>
           </TableHead>
           <TableBody>
+            {result === null && !error && (
+              <TableRow>
+                <TableCell colSpan={8} align="center">
+                  Loading…
+                </TableCell>
+              </TableRow>
+            )}
+            {result !== null && rows.length === 0 && !error && (
+              <TableRow>
+                <TableCell colSpan={8} align="center">
+                  No employees found
+                </TableCell>
+              </TableRow>
+            )}
             {rows.map((e) => (
               <TableRow key={e.id} hover>
                 <TableCell>

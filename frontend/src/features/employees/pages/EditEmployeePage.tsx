@@ -8,7 +8,8 @@ import { EmployeeNotFoundError, getEmployee } from '../api';
 type State =
   | { kind: 'loading' }
   | { kind: 'loaded'; employee: Employee }
-  | { kind: 'not-found' };
+  | { kind: 'not-found' }
+  | { kind: 'error' };
 
 export default function EditEmployeePage() {
   const { id } = useParams();
@@ -23,9 +24,10 @@ export default function EditEmployeePage() {
         if (active) setState({ kind: 'loaded', employee });
       })
       .catch((err) => {
-        if (active && err instanceof EmployeeNotFoundError) {
-          setState({ kind: 'not-found' });
-        }
+        if (!active) return;
+        setState(
+          err instanceof EmployeeNotFoundError ? { kind: 'not-found' } : { kind: 'error' }
+        );
       });
     return () => {
       active = false;
@@ -35,6 +37,7 @@ export default function EditEmployeePage() {
   if (!id) return null;
   if (state.kind === 'loading') return <CircularProgress aria-label="Loading" />;
   if (state.kind === 'not-found') return <Typography>Employee not found</Typography>;
+  if (state.kind === 'error') return <Typography>Something went wrong</Typography>;
 
   return (
     <Paper sx={{ p: { xs: 2, sm: 3 }, maxWidth: 560 }}>

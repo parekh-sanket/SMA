@@ -58,6 +58,7 @@ export default function EmployeeForm({
   const [values, setValues] = useState<FormState>(() => initialState(employee));
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const requiredFields: (keyof FormState)[] = isEdit
     ? ['name', 'department', 'country', 'title', 'hireDate', 'employmentType', 'status']
@@ -73,6 +74,14 @@ export default function EmployeeForm({
     for (const field of requiredFields) {
       if (!values[field].trim()) next[field] = 'This field is required';
     }
+    if (!isEdit) {
+      if (values.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
+        next.email = 'Enter a valid email';
+      }
+      if (values.salary.trim() && !(Number(values.salary) >= 0)) {
+        next.salary = 'Enter a valid non-negative amount';
+      }
+    }
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -82,6 +91,7 @@ export default function EmployeeForm({
     setSubmitError(null);
     if (!validate()) return;
 
+    setSubmitting(true);
     try {
       if (isEdit && employee) {
         const updated = await updateEmployee(employee.id, {
@@ -115,6 +125,8 @@ export default function EmployeeForm({
       } else {
         setSubmitError(isEdit ? 'Failed to update employee' : 'Failed to create employee');
       }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -244,7 +256,7 @@ export default function EmployeeForm({
         )}
 
         <Stack direction="row" spacing={1}>
-          <Button type="submit" variant="contained">
+          <Button type="submit" variant="contained" disabled={submitting}>
             {isEdit ? 'Save Changes' : 'Add Employee'}
           </Button>
           {onCancel && (

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
-import { Box, Card, CardContent, Link, Paper, Stack, Typography } from '@mui/material';
+import { Alert, Box, Card, CardContent, Link, Paper, Stack, Typography } from '@mui/material';
 import GroupsIcon from '@mui/icons-material/Groups';
 import PaymentsIcon from '@mui/icons-material/Payments';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
@@ -43,9 +43,12 @@ export default function AnalyticsDashboard() {
   const [countryBreakdown, setCountryBreakdown] = useState<BreakdownGroup[]>([]);
   const [topEarners, setTopEarners] = useState<Employee[]>([]);
   const [distribution, setDistribution] = useState<Distribution | null>(null);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
-    getSummary().then(setSummary).catch(() => {});
+    getSummary()
+      .then(setSummary)
+      .catch(() => setLoadError(true));
     getFacets().then(setFacets).catch(() => {});
     getBreakdown('department').then(setDeptBreakdown).catch(() => {});
     getBreakdown('country').then(setCountryBreakdown).catch(() => {});
@@ -72,6 +75,12 @@ export default function AnalyticsDashboard() {
       <Typography color="text.secondary" sx={{ mb: 3 }}>
         Analytics across your organization
       </Typography>
+
+      {loadError && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          Failed to load analytics. Please try again.
+        </Alert>
+      )}
 
       {summary && (
         <Box
@@ -138,11 +147,15 @@ export default function AnalyticsDashboard() {
       </Box>
 
       <ChartCard title="Avg Salary by Department" subtitle="Average compensation across teams">
-        <ResponsiveContainer width="100%" height={Math.max(240, deptData.length * 40)}>
-          <BarChart data={deptData} layout="vertical" margin={{ left: 30 }}>
+        <ResponsiveContainer width="100%" height={Math.max(260, deptData.length * 44)}>
+          <BarChart
+            data={deptData}
+            layout="vertical"
+            margin={{ top: 4, right: 12, bottom: 4, left: 0 }}
+          >
             <CartesianGrid strokeDasharray="3 3" horizontal={false} />
             <XAxis type="number" tickFormatter={kAxis} />
-            <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 12 }} />
+            <YAxis type="category" dataKey="name" width={92} tick={{ fontSize: 11 }} />
             <Tooltip formatter={tip} />
             <Bar dataKey="avg" radius={[0, 4, 4, 0]}>
               {deptData.map((_, i) => (
