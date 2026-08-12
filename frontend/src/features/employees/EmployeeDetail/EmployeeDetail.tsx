@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import type { Employee } from '../../../types/models';
 import { adjustSalary, EmployeeNotFoundError, getEmployee } from '../api';
+import { EMPLOYMENT_TYPE_LABELS, STATUS_LABELS } from '../labels';
 
 interface EmployeeDetailProps {
   employeeId: string;
@@ -72,9 +73,9 @@ export default function EmployeeDetail({ employeeId }: EmployeeDetailProps) {
       <Typography color="text.secondary">{e.title}</Typography>
 
       <Stack direction="row" spacing={1} sx={{ my: 1.5 }}>
-        <Chip label={e.employmentType} />
+        <Chip label={EMPLOYMENT_TYPE_LABELS[e.employmentType]} />
         <Chip
-          label={e.status}
+          label={STATUS_LABELS[e.status]}
           color={e.status === 'active' ? 'success' : 'default'}
         />
       </Stack>

@@ -53,3 +53,15 @@ export interface EmployeeFacets {
   departments: string[];
   countries: string[];
 }
+
+/** The editable subset of an employee (email and salary are managed separately). */
+export interface UpdateEmployeeFields {
+  name: string;
+  department: string;
+  country: string;
+  title: string;
+  hireDate: string;
+  employmentType: EmploymentType;
+  status: EmployeeStatus;
+  managerId: string | null;
+}

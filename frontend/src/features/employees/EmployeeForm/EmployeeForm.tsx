@@ -4,6 +4,7 @@ import { Alert, Box, Button, Stack, TextField } from '@mui/material';
 import type { Employee, EmploymentType } from '../../../types/models';
 import { createEmployee, DuplicateEmailError } from '../api';
 import { COUNTRIES, DEPARTMENTS } from '../referenceData';
+import { EMPLOYMENT_TYPE_LABELS } from '../labels';
 
 interface EmployeeFormProps {
   onCreated?: (employee: Employee) => void;
@@ -143,11 +144,11 @@ export default function EmployeeForm({ onCreated }: EmployeeFormProps) {
         />
         <TextField
           label="Hire Date"
+          type="date"
           value={values.hireDate}
           onChange={setField('hireDate')}
           error={!!errors.hireDate}
           helperText={errors.hireDate}
-          placeholder="YYYY-MM-DD"
           InputLabelProps={{ shrink: true }}
         />
         <TextField
@@ -163,7 +164,7 @@ export default function EmployeeForm({ onCreated }: EmployeeFormProps) {
           <option value="" aria-label="none" />
           {EMPLOYMENT_TYPES.map((type) => (
             <option key={type} value={type}>
-              {type}
+              {EMPLOYMENT_TYPE_LABELS[type]}
             </option>
           ))}
         </TextField>

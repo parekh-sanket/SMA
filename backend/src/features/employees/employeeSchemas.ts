@@ -42,3 +42,20 @@ export const adjustSalarySchema = z.object({
 });
 
 export type AdjustSalaryInput = z.infer<typeof adjustSalarySchema>;
+
+/**
+ * Validation for editing an employee. Email and salary are not editable here
+ * (email is the identity key; salary has its own adjust endpoint).
+ */
+export const updateEmployeeSchema = z.object({
+  name: z.string().min(1),
+  department: z.string().min(1),
+  country: z.string().min(1),
+  title: z.string().min(1),
+  hireDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected YYYY-MM-DD'),
+  employmentType: z.enum(['full-time', 'part-time', 'contractor']),
+  status: z.enum(['active', 'terminated']),
+  managerId: z.string().min(1).nullable().optional(),
+});
+
+export type UpdateEmployeeInput = z.infer<typeof updateEmployeeSchema>;

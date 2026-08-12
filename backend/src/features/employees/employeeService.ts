@@ -1,7 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { formatUsd, toMinorUnits } from '../../domain/money';
 import type { EmployeeRepository } from './employeeRepository';
-import type { CreateEmployeeInput, ListEmployeesQuery } from './employeeSchemas';
+import type {
+  CreateEmployeeInput,
+  ListEmployeesQuery,
+  UpdateEmployeeInput,
+} from './employeeSchemas';
 import type { Employee, EmployeeFacets, EmployeeResponse } from './types';
 
 /** Thrown when a create would violate the unique-email constraint. */
@@ -20,6 +24,8 @@ export interface EmployeeService {
   list(query: ListEmployeesQuery): PaginatedEmployeeResponse;
   getFacets(): EmployeeFacets;
   adjustSalary(id: string, salary: number): EmployeeResponse | null;
+  update(id: string, input: UpdateEmployeeInput): EmployeeResponse | null;
+  deleteById(id: string): boolean;
 }
 
 function toResponse(employee: Employee): EmployeeResponse {
@@ -91,6 +97,30 @@ export function createEmployeeService(
       if (!changed) return null;
       const employee = repo.getById(id);
       return employee ? toResponse(employee) : null;
+    },
+
+    update(id, input) {
+      const changed = repo.update(
+        id,
+        {
+          name: input.name,
+          department: input.department,
+          country: input.country,
+          title: input.title,
+          hireDate: input.hireDate,
+          employmentType: input.employmentType,
+          status: input.status,
+          managerId: input.managerId ?? null,
+        },
+        now()
+      );
+      if (!changed) return null;
+      const employee = repo.getById(id);
+      return employee ? toResponse(employee) : null;
+    },
+
+    deleteById(id) {
+      return repo.deleteById(id);
     },
   };
 }

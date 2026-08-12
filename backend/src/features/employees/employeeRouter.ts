@@ -6,6 +6,7 @@ import {
   adjustSalarySchema,
   createEmployeeSchema,
   listEmployeesQuerySchema,
+  updateEmployeeSchema,
 } from './employeeSchemas';
 
 /**
@@ -73,6 +74,30 @@ export function createEmployeeRouter(db: Database): Router {
       return;
     }
     res.json(updated);
+  });
+
+  router.put('/employees/:id', (req, res) => {
+    const parsed = updateEmployeeSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: 'ValidationError', details: parsed.error.flatten() });
+      return;
+    }
+
+    const updated = service.update(req.params.id, parsed.data);
+    if (!updated) {
+      res.status(404).json({ error: 'NotFound' });
+      return;
+    }
+    res.json(updated);
+  });
+
+  router.delete('/employees/:id', (req, res) => {
+    const deleted = service.deleteById(req.params.id);
+    if (!deleted) {
+      res.status(404).json({ error: 'NotFound' });
+      return;
+    }
+    res.status(204).send();
   });
 
   return router;

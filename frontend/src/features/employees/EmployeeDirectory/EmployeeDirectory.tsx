@@ -25,6 +25,7 @@ import type {
   SortBy,
 } from '../../../types/models';
 import { getFacets, listEmployees } from '../api';
+import { EMPLOYMENT_TYPE_LABELS, STATUS_LABELS } from '../labels';
 
 const INITIAL_QUERY: ListEmployeesQuery = {
   page: 1,
@@ -180,8 +181,8 @@ export default function EmployeeDirectory() {
                 <TableCell>{e.country}</TableCell>
                 <TableCell>{e.title}</TableCell>
                 <TableCell>{e.salaryFormatted}</TableCell>
-                <TableCell>{e.employmentType}</TableCell>
-                <TableCell>{e.status}</TableCell>
+                <TableCell>{EMPLOYMENT_TYPE_LABELS[e.employmentType]}</TableCell>
+                <TableCell>{STATUS_LABELS[e.status]}</TableCell>
               </TableRow>
             ))}
           </TableBody>

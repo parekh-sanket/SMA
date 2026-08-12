@@ -6,6 +6,7 @@ import type {
   EmployeeStatus,
   ListEmployeesOptions,
   PaginatedEmployees,
+  UpdateEmployeeFields,
 } from './types';
 
 export interface EmployeeRepository {
@@ -14,6 +15,8 @@ export interface EmployeeRepository {
   list(options: ListEmployeesOptions): PaginatedEmployees;
   facets(): EmployeeFacets;
   updateSalary(id: string, salaryMinor: number, updatedAt: string): boolean;
+  update(id: string, fields: UpdateEmployeeFields, updatedAt: string): boolean;
+  deleteById(id: string): boolean;
 }
 
 interface EmployeeRow {
@@ -66,6 +69,14 @@ export function createEmployeeRepository(db: Database): EmployeeRepository {
   const updateSalaryStmt = db.prepare(
     'UPDATE employees SET base_salary_minor = @salaryMinor, updated_at = @updatedAt WHERE id = @id'
   );
+  const updateStmt = db.prepare(`
+    UPDATE employees SET
+      name = @name, department = @department, country = @country, title = @title,
+      hire_date = @hireDate, employment_type = @employmentType, status = @status,
+      manager_id = @managerId, updated_at = @updatedAt
+    WHERE id = @id
+  `);
+  const deleteStmt = db.prepare('DELETE FROM employees WHERE id = ?');
 
   function buildFilters(options: ListEmployeesOptions): {
     where: string;
@@ -101,6 +112,16 @@ export function createEmployeeRepository(db: Database): EmployeeRepository {
 
     updateSalary(id, salaryMinor, updatedAt) {
       const info = updateSalaryStmt.run({ id, salaryMinor, updatedAt });
+      return info.changes > 0;
+    },
+
+    update(id, fields, updatedAt) {
+      const info = updateStmt.run({ id, ...fields, updatedAt });
+      return info.changes > 0;
+    },
+
+    deleteById(id) {
+      const info = deleteStmt.run(id);
       return info.changes > 0;
     },
 
