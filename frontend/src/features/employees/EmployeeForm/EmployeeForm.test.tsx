@@ -24,8 +24,8 @@ const created: Employee = {
 async function fillValidForm(user: UserEvent) {
   await user.type(screen.getByLabelText(/name/i), 'Ada Lovelace');
   await user.type(screen.getByLabelText(/email/i), 'ada@acme.test');
-  await user.type(screen.getByLabelText(/department/i), 'Engineering');
-  await user.type(screen.getByLabelText(/country/i), 'US');
+  await user.selectOptions(screen.getByLabelText(/department/i), 'Engineering');
+  await user.selectOptions(screen.getByLabelText(/country/i), 'US');
   await user.type(screen.getByLabelText(/title/i), 'Staff Engineer');
   await user.type(screen.getByLabelText(/hire date/i), '2021-05-01');
   await user.selectOptions(screen.getByLabelText(/employment type/i), 'full-time');
@@ -44,8 +44,8 @@ describe('EmployeeForm', () => {
 
     expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/department/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/country/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/department/i).tagName).toBe('SELECT');
+    expect(screen.getByLabelText(/country/i).tagName).toBe('SELECT');
     expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/hire date/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/employment type/i)).toBeInTheDocument();
